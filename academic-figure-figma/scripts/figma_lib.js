@@ -162,6 +162,19 @@ function auditFigure(root, opts) {
     const ov = Math.max(pb.x - tb.x, tb.x + tb.w - (pb.x + pb.w), pb.y - tb.y, tb.y + tb.h - (pb.y + pb.h));
     if (ov > 0.5) out.push({ level: 'ERROR', check: 'textOverflow', node: JSON.stringify(t.characters.slice(0, 24)), detail: 'ink exceeds ' + p.name + ' by ' + ov.toFixed(1) + 'pt' });
   }
+  // text ink colliding with a block that is NOT its ancestor (annotation-over-chip
+  // case: text fits its parent column yet lands on a sibling block's border)
+  for (const t of texts) {
+    const tb = _ink(t); if (!tb) continue;
+    for (const b of blocks) {
+      if (_isAncestor(b, t)) continue;
+      const r = _bb(b); if (!r) continue;
+      const ix = Math.min(tb.x + tb.w, r.x + r.w) - Math.max(tb.x, r.x);
+      const iy = Math.min(tb.y + tb.h, r.y + r.h) - Math.max(tb.y, r.y);
+      if (ix > 0.3 && iy > 0.3)
+        out.push({ level: 'ERROR', check: 'textBlockCollision', node: JSON.stringify(t.characters.slice(0, 24)) + ' × ' + b.name, detail: Math.min(ix, iy).toFixed(1) + 'pt penetration' });
+    }
+  }
   // partial overlap between sibling blocks; full containment = layering, OK
   for (let i = 0; i < blocks.length; i++) for (let j = i + 1; j < blocks.length; j++) {
     const A = blocks[i], B = blocks[j]; if (A.parent !== B.parent) continue;

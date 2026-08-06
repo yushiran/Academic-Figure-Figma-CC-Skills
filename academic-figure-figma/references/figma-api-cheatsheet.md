@@ -91,11 +91,14 @@ return { createdNodeIds: [/* every id */] };
 - Before declaring done run `auditFigure(art)` — structured lint returning
   `{findings, errors, warnings, consistency}`. Checks: text below 6pt (WARN),
   text INK outside its parent frame (ERROR; judged on renderBounds, so an
-  oversized-but-empty text node is not flagged), partial overlap of sibling
-  blocks (ERROR; full containment = layering, OK), an arrow segment crossing a
-  block interior (ERROR; tail/head endpoints exempt, interior corner vertices
-  NOT — a corner inside a block means the route goes through it), arrow head
-  buried >3pt inside a block (WARN). Fix every ERROR before user review.
+  oversized-but-empty text node is not flagged), text ink touching a block that
+  is NOT its ancestor (ERROR; catches an annotation whose lower line lands on a
+  sibling chip's border — it fits its parent column, so the parent-overflow
+  check alone misses it), partial overlap of sibling blocks (ERROR; full
+  containment = layering, OK), an arrow segment crossing a block interior
+  (ERROR; tail/head endpoints exempt, interior corner vertices NOT — a corner
+  inside a block means the route goes through it), arrow head buried >3pt
+  inside a block (WARN). Fix every ERROR before user review.
 - Grouping frames arrows may legitimately cross must be named `*-stack`,
   `*-group`, `*-region`, `*-panel` or `*-container` (or passed via
   `auditFigure(art, {passThrough: ['name']})`) — they are exempt from the
