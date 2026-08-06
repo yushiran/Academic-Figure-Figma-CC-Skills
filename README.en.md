@@ -30,8 +30,24 @@ Upstream figure pipelines ([studio-pro](https://github.com/c-narcissus/paper-fra
 
 No human intervention: skeleton → three parallel fill calls → one assembly pass laying 25 end-to-end arrows → screenshot self-review, which caught two memory arrows piercing the cross-attention block and rerouted them.
 
+## ✅ Capability matrix
+
+| Capability | Status |
+| --- | --- |
+| Rebuild a raster reference as an editable vector | ✅ |
+| Generate a framework figure from text / sketch | ✅ |
+| Pre-draw audit of paper terms and numbers | ✅ |
+| Exact canvas sizes for IEEE / AAAI / NeurIPS / Elsevier | ✅ |
+| LaTeX formulas as true vectors | ✅ |
+| Icon cache with per-mark eye check | ✅ |
+| Parallel multi-call drawing | ✅ |
+| Automated style-consistency audit | ✅ |
+| Guided Figma MCP setup | ✅ |
+| Structured figure lint (overflow / arrow-through-block / font floor) | 🚧 planned |
+
 ## 📰 News
 
+> - **2026-08** · v0.4: single-node end-to-end arrows, STYLE tokens + consistency audit, latex2svg formula pipeline, parallel drawing protocol, live demo video.
 > - **2026-08** · v0.1 released: five-step workflow + five reference docs + login-free iconfont search script.
 
 ## 📦 Skill structure
@@ -45,13 +61,18 @@ academic-figure-figma/
 
 | File | What it covers |
 | --- | --- |
-| `SKILL.md` | 6 hard rules; Preflight → skeleton → content → icons → arrows → balance & self-review |
+| `SKILL.md` | 8 hard rules; Preflight → skeleton → parallel fill → assembly → review loop |
+| `references/figma-api-cheatsheet.md` | Self-contained API subset: single-node arrows, STYLE tokens, consistency discipline, error→fix table |
+| `references/parallel-drawing.md` | Parallel drawing protocol: safety condition and wave pattern for same-message fan-out |
 | `references/figma-mcp-setup.md` | MCP connection, OAuth on remote sessions, seat/quota traps, free Education plan (200 calls/day) |
 | `references/paper-canvas-specs.md` | IEEEtran 252/516pt, elsarticle ≈390pt, AAAI 239/504pt, 6pt font floor, Tinos for Times |
 | `references/figure-grammar.md` | Figure grammar: arrow evidence, no false relays, variables on edges, centred mainline, anti-AI palette |
 | `references/icon-sourcing.md` | Lucide / lobe-icons / simpleicons / iconfont API vector sourcing with per-mark verification |
-| `references/build-workflow.md` | Incremental build, arrows, multi-column balancing, screenshot checklist, recorded pitfalls |
+| `references/build-workflow.md` | Incremental build, multi-column balancing, screenshot checklist, recorded pitfalls |
+| `scripts/figma_lib.js` | Battle-tested drawing library: single-node end-to-end arrows, stageColumn/chip/brace, auditConsistency |
+| `scripts/latex2svg.py` | LaTeX → STIX (Times-style) → injectable SVG formula pipeline |
 | `scripts/iconfont_search.py` | iconfont.cn login-free search → injectable SVG |
+| `scripts/assets/icons/` | 32 pre-cleaned cached icons (24 Lucide + 8 AI brand marks, each eye-verified) |
 
 ## 🚀 Quick start
 

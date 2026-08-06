@@ -1,6 +1,13 @@
 ---
 name: academic-figure-figma
-description: Use when the user wants a paper figure (framework, pipeline, architecture, method overview) drawn, rebuilt, or refined as an editable vector in Figma via Claude Code — including reproducing a candidate/reference image (e.g. studio-pro C01-C04) at exact print size. Also use when the user needs to set up or fix the Claude Code-Figma connection: installing the Figma MCP plugin, OAuth/authentication (incl. remote sessions), seat or quota problems, "figma 连不上/怎么配置", or a first-run guided setup.
+description: >-
+  Use when the user wants a paper figure (framework, pipeline, architecture,
+  method overview) drawn, rebuilt, or refined as an editable vector in Figma
+  via Claude Code — including reproducing a candidate/reference image
+  (e.g. studio-pro C01-C04) at exact print size. Also use when the user needs
+  to set up or fix the Claude Code-Figma connection: installing the Figma MCP
+  plugin, OAuth/authentication (incl. remote sessions), seat or quota problems,
+  "figma 连不上/怎么配置", or a first-run guided setup.
 ---
 
 # Academic Figure in Figma (Claude Code)

@@ -11,6 +11,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install pinned pylint and script dependencies
-        run: pip install "pylint==3.3.*" matplotlib
+        run: pip install "pylint==3.3.*" matplotlib pyyaml
       - name: Run pylint
         run: pylint $(git ls-files '*.py')
+      - name: Validate SKILL.md frontmatter (real YAML parse)
+        run: python -c "import yaml; d=yaml.safe_load(open('academic-figure-figma/SKILL.md').read().split('---')[1]); assert d and 'name' in d and 'description' in d"
