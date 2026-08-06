@@ -1,89 +1,72 @@
 ---
 name: academic-figure-figma
-description: Use when the user wants to draw, rebuild, or refine an academic paper figure (framework, pipeline, architecture, method overview) as an editable vector graphic in Figma via Claude Code and the Figma MCP server. Covers Figma MCP connection and quota, paper-accurate canvas sizing (IEEE/Elsevier), sourcing brand logos and concept icons as true SVG vectors, incremental canvas construction with screenshot self-review, and terminology/correctness alignment with the paper source. Also use when a reference/candidate image (e.g. from paper-framework-figure-studio-pro C01-C04) needs to be reproduced as an editable Figma figure.
+description: Use when the user wants a paper figure (framework, pipeline, architecture, method overview) drawn, rebuilt, or refined as an editable vector in Figma via Claude Code — including reproducing a candidate/reference image (e.g. studio-pro C01-C04) at exact print size, or when Figma MCP quota/connection issues block drawing.
 ---
 
 # Academic Figure in Figma (Claude Code)
 
-Turn a paper figure sketch, a ChatGPT-generated candidate image, or a text description
-into an **editable, paper-spec vector figure in Figma**, driven entirely from Claude Code
-through the official Figma MCP server.
+Land a sketch, candidate image, or text description as an **editable, paper-exact
+vector figure in Figma**, drawn directly through the Figma MCP server.
 
-Position in the toolchain: upstream tools (paper-framework-figure-studio-pro, PaperBanana)
-produce raster *candidate references*. This skill does the last mile — a real Figma file
-the author can hand-tune, with exact paper dimensions and true vector icons.
+**Draw from this skill alone.** `references/figma-api-cheatsheet.md` +
+`scripts/figma_lib.js` contain the complete verified API subset — do NOT load the
+official figma-use skill, the Plugin API typings, or explore the API by trial: that
+is the slow path this skill replaces. Icons come from the local cache first
+(`scripts/assets/icons/icons.json`, pre-cleaned, injection-ready).
 
-## Hard rules (learned from real failures)
+## Hard rules
 
-1. **Correctness before aesthetics.** Before drawing anything, grep the paper source and
-   verify EVERY number, term, and metric name that will appear in the figure. Real catches:
-   a candidate image said "111 semantic groups" (paper: 11), "Accuracy" (paper's table:
-   "Exact Match"), and hard-coded "Section 3.4.1" (numbering had shifted to 3.2.1 — never
-   put section numbers in figures). Fix the reference's errors; do not reproduce them.
-2. **One term per concept, matching the paper's canon.** If the paper says
-   "difficulty-weighted Jaccard reward", the figure must not say "weighted F1". Sweep the
-   figure's text labels against the paper before declaring done.
-3. **Logo semantics.** A base-model logo (e.g. Qwen) belongs on the *backbone* block only.
-   Never put a third-party brand mark on the *final/proposed model* block.
-4. **Verify every fetched logo by eye.** Icon CDNs mislabel. Render at scale 4-6 and look
-   at it before use (simpleicons' "qwen" is NOT the Qwen logo; lobe-icons' is correct).
-5. **Design at final size.** Create the artboard at the true print width in pt (see
-   references/paper-canvas-specs.md) and set font sizes directly. Never draw a large
-   canvas and shrink it — a 1540px-wide draft compressed to a 516pt column turns 13px
-   text into unreadable 4.4pt.
-6. **Screenshot after every build stage.** `await node.screenshot()` inside the same
-   use_figma call. Check: text overflow/wrapping, arrow direction (single-headed),
-   uneven whitespace, terminology. Fix before building the next stage.
+1. **Correctness before aesthetics.** Grep the paper for every number, term, metric
+   name, and section reference the figure will carry; show the audit table before
+   drawing. Fix the reference image's errors, never reproduce them. Terminology must
+   match the paper canon verbatim; when the paper is inconsistent, ask the user to
+   pick. Never hard-code section numbers into a figure.
+2. **Basic building blocks only.** Frame, Text, Line, Polygon, SVG import, absolute
+   x/y. Auto Layout, Components, Variables, Styles are banned (cheatsheet §Allowed).
+3. **Design at final print size** (references/paper-canvas-specs.md). Never draw big
+   and shrink — fonts fall below the 6pt floor.
+4. **Figure grammar** (references/figure-grammar.md): evidence for every arrow, no
+   false relays, variables on edges not boxes, operation chains not just outcomes,
+   repeated entities compressed, mainline centred, restrained palette.
+5. **Logo semantics + eye check.** Base-model logos on the backbone block only; never
+   a brand mark on the proposed-model block. Screenshot every fetched logo before use
+   — CDNs mislabel (cache manifest records which marks are already verified).
+6. **Screenshot after every wave**, inside the same call. Check: text overflow,
+   single-headed arrows pointing with the flow, whitespace balance, terminology.
 
 ## Workflow
 
-### Step 0 — Preflight
-- Confirm the Figma MCP server is connected: call `whoami` (quota-exempt).
-  Not connected or quota exhausted → references/figma-mcp-setup.md.
-- Identify the paper's LaTeX class and pick canvas width → references/paper-canvas-specs.md.
-- If a candidate/reference image exists, read it and produce a correctness audit table
-  (claim in image vs. paper source vs. verdict) BEFORE drawing. Show it to the user.
-- Plan the figure against references/figure-grammar.md: evidence for every arrow,
-  variables on edges not boxes, operation chains not just outcomes, repeated entities
-  compressed, mainline centred, in-figure vs. caption text ownership decided.
+**Step 0 — Preflight.** `whoami` (quota-exempt) → seat must be Full with a paid or
+education plan, else fix first (references/figma-mcp-setup.md). Pick canvas width
+from the venue (references/paper-canvas-specs.md). Produce the Step-0 correctness
+audit table (rule 1) and the figure-grammar plan (rule 4). Read
+`scripts/figma_lib.js` and the icon cache manifest now — every later call pastes the
+lib verbatim at the top of its code.
 
-### Step 1 — Skeleton
-Build the artboard and top-level containers (stage columns / panel bands) in one
-use_figma call. Title row, panel labels ("(a) ...", "(b) ..."), dashed panel divider.
-White background, thin coloured strokes (~0.9pt), corner radius 3-4, one accent colour
-per stage from a low-saturation palette.
+**Step 1 — Skeleton (1 call).** Artboard at print width + all stage/panel containers
+via `stageColumn()`; panel titles, dashed divider. Return every container id.
 
-### Step 2 — Content fill
-Fill containers stage by stage (≤10 logical operations per call). Chips = tinted
-fill + darker stroke of the same hue. Body text via a `txt()` helper with
-`textAutoResize:"HEIGHT"` + explicit width (default WIDTH_AND_HEIGHT collapses to a
-zero-width thread). Keep per-chip text to 2-4 short lines.
+**Step 2 — Parallel fill (N calls, one message).** One call per container, following
+references/parallel-drawing.md: paste lib, `await FONTS()`, fill chips/text/icons for
+that container only (`chip()`, `txt()`, `placeSvg()` with cached icons). Fan out all
+containers simultaneously; never touch siblings or globals.
 
-### Step 3 — Icons and logos
-Fetch as SVG, inject as true vectors → references/icon-sourcing.md and
-scripts/iconfont_search.py. `figma.createNodeFromSvg(svg)` then `rescale(target/width)`.
-Concept icons: Lucide first (uniform stroke). Brand logos: lobe-icons first.
-Chinese-context concept icons: iconfont search API.
+**Step 3 — Assembly (1 call).** Arrows between stages (`arrowH`/`arrowV`, colour per
+flow type), legend (`legendRow`), per-column balance (`balanceColumn`), artboard trim.
+Keep the returned arrow ids for later adjustments — never re-find arrows by type.
 
-### Step 4 — Arrows and flow
-Single-direction arrows: line shaft (`strokeCap:"NONE"`) + small 3-point polygon head
-(rotation -90 for rightward, 180 for downward). Colour arrows by flow type (data / SFT /
-RL / evaluation) and add a legend. Never rely on `strokeCap:"ARROW_LINES"` for a single
-head — it arrows both ends.
-When later re-centring arrows, address them by an **explicit id list**. A loop over
-`children.filter(type==='LINE')` will also drag panel dividers (this happened; it moved
-the divider 112pt into a panel).
+**Step 4 — Review loop.** Screenshot at 2.5-3x; run rule 6 plus the error vocabulary
+at the end of references/figure-grammar.md. Independent fixes may fan out again.
+Stop when clean; ask the user to review in Figma at 100% zoom; user exports PDF.
 
-### Step 5 — Balance and self-review
-Trim artboard to content. Height of a multi-column panel = its fullest column; centre
-the other columns' bodies. Screenshot at 2.5-3x, run the rule-6 checklist plus the
-error vocabulary at the end of references/figure-grammar.md (false relays, variables
-drawn as boxes, unbundled parallel edges, off-centre mainline, excessive whitespace),
-fix, repeat until clean. Then ask the user to review in Figma at 100% zoom.
+## References
 
-## Recovery notes
-- A failed use_figma script is **atomic** — nothing landed; fix and rerun.
-- Page/tool context resets between calls; re-fetch nodes by id each call and return all
-  created/mutated ids.
-- Free-plan quota is 6 calls/month total — do not start drawing on a Starter/View seat;
-  fix the seat first (references/figma-mcp-setup.md).
+| File | Load when |
+|---|---|
+| references/figma-api-cheatsheet.md | before writing the first use_figma call (always) |
+| references/parallel-drawing.md | at Step 2 |
+| references/paper-canvas-specs.md | at Step 0 (canvas + fonts + palette numbers) |
+| references/figure-grammar.md | at Step 0 planning and Step 4 review |
+| references/icon-sourcing.md | only when an icon is NOT in the local cache |
+| references/figma-mcp-setup.md | connection/quota problems only |
+| references/build-workflow.md | deep dives: balancing math, pitfalls, export |

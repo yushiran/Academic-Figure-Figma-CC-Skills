@@ -1,0 +1,74 @@
+# Figma Plugin API cheatsheet — the paper-figure subset
+
+Self-contained. With this file plus `scripts/figma_lib.js`, you can write every
+`use_figma` call for a paper figure WITHOUT loading the official figma-use skill or
+the Plugin API typings. Stay inside this subset; it is sufficient and verified.
+
+## The use_figma contract
+
+- `code` is plain JavaScript, auto-wrapped in an async context: use top-level `await`,
+  end with `return {...}` — the return value is your ONLY output channel
+  (`console.log` is invisible; `figma.notify` throws).
+- **Failed scripts are atomic**: an error means nothing was applied. Read the error,
+  fix, retry once.
+- **Context resets between calls.** Re-include figma_lib.js, re-load fonts, re-fetch
+  nodes by id (`await figma.getNodeByIdAsync("12:34")`) every call.
+- Always return every created/mutated node id: `return {createdNodeIds:[...], ...}`.
+- Screenshot inside the call: `await node.screenshot({scale: 2.6})` — the image comes
+  back with the tool result; no separate screenshot call needed.
+
+## Allowed node types (hard rule: nothing else)
+
+`createFrame` `createText` `createLine` `createPolygon` `createNodeFromSvg`
+
+**Banned for paper figures** — they add API complexity with zero benefit here:
+Auto Layout (`layoutMode`, `layoutSizing*`, `primaryAxisSizingMode`, `createAutoLayout`),
+Components/Variants/Instances, Variables/Tokens/Styles, `figma.createImage*`,
+`loadAllPagesAsync`, `setPluginData`, Sticky/Connector (FigJam-only anyway).
+Absolute x/y positioning inside plain frames is the whole layout model.
+
+## Core facts (each one is a real trap)
+
+| Fact | Detail |
+|---|---|
+| Colours are 0-1 | `{r:1,g:0,b:0}` = red. Use `HEX('#3373D9')` from the lib. |
+| fills/strokes are read-only arrays | assign whole new arrays: `n.fills = [S(1,1,1)]` |
+| Fonts must load first | `await figma.loadFontAsync({family:'Tinos',style:'Bold'})` before ANY text op — per call. Tinos = Times substitute; styles: Regular/Bold/Italic. Inter style names have spaces ("Semi Bold"). |
+| Text wrapping | `textAutoResize='HEIGHT'` + `resize(width, anyHeight)`. The default mode ignores width and collapses the node to a thread. |
+| lineHeight/letterSpacing | object form: `{unit:'PIXELS', value: 12}` — bare numbers throw |
+| resize vs rescale | `resize(w,h)` sets box; `rescale(k)` scales children+strokes too — use rescale for SVG icons (`rescale(target/node.width)`) |
+| Line length | `line.resize(len, 0)`; direction via `rotation` (-90 = downward) |
+| Single-head arrows | shaft `strokeCap:'NONE'` + 3-point polygon head. `strokeCap:'ARROW_LINES'` puts heads on BOTH ends. |
+| Polygon head placement | rightward: `rotation=-90, x=tip-3.6, y=mid-2.3`; downward: `rotation=180, x=mid-1.8, y=tip-4.6` |
+| Find nodes | `await figma.getNodeByIdAsync(id)`, `parent.children.filter(...)`, `node.findAll(n=>...)` |
+| Batch edits by id | when re-positioning arrows/dividers, use an EXPLICIT id list. Filtering `type==='LINE'` once caught a dashed divider and dragged it 112pt. |
+| Dashed lines | `n.dashPattern = [3,3]` |
+| Corner radius | `n.cornerRadius = 4` |
+| Page switch | `await figma.setCurrentPageAsync(page)` — the sync setter throws. One switch per call max. |
+| New top-level nodes | default to (0,0) — set x/y away from existing content |
+
+## Canonical call skeleton
+
+```js
+/* --- paste figma_lib.js here --- */
+await FONTS();
+const art = await figma.getNodeByIdAsync("9:2");   // or figma.createFrame() on call 1
+
+// ... composition using stageColumn / chip / txt / arrowH / placeSvg ...
+
+await art.screenshot({ scale: 2.6 });
+return { createdNodeIds: [/* every id */] };
+```
+
+## Error → fix table
+
+| Error | Fix |
+|---|---|
+| `Cannot write to node with unloaded font` | `await FONTS()` (or load the exact family/style) before the text op |
+| `in set_layoutSizingHorizontal: ...` | you touched Auto Layout — banned; use absolute x/y |
+| `Expected 'FIXED' \| 'AUTO'...` | same — Auto Layout property, banned |
+| `Setting figma.currentPage is not supported` | use `await figma.setCurrentPageAsync(page)` |
+| `no such property 'createPage'` | you are in FigJam/Slides — this skill targets /design/ files only |
+| colour out of range | you passed 0-255; divide by 255 or use HEX() |
+| `The node with id X does not exist` | stale id from a previous call — re-fetch, or the node was removed |
+| text shows but width 0 / vertical thread | missing `textAutoResize='HEIGHT'` + `resize(w, h)` |

@@ -1,0 +1,38 @@
+name: Package skill
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate skill structure
+        run: |
+          test -f academic-figure-figma/SKILL.md
+          head -1 academic-figure-figma/SKILL.md | grep -q '^---$'
+          grep -q '^name: academic-figure-figma$' academic-figure-figma/SKILL.md
+          grep -q '^description: ' academic-figure-figma/SKILL.md
+          python3 -c "import json; json.load(open('academic-figure-figma/scripts/assets/icons/icons.json'))"
+          echo "structure OK"
+
+      - name: Build zip
+        run: |
+          VERSION="${GITHUB_REF_NAME:-dev}"
+          zip -r "academic-figure-figma-${VERSION}.zip" academic-figure-figma \
+            -x "*.DS_Store" -x "*__pycache__*"
+          ls -la *.zip
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: academic-figure-figma-*.zip
+          generate_release_notes: true
