@@ -47,6 +47,10 @@ Absolute x/y positioning inside plain frames is the whole layout model.
 | Page switch | `await figma.setCurrentPageAsync(page)` — the sync setter throws. One switch per call max. |
 | New top-level nodes | default to (0,0) — set x/y away from existing content |
 
+## Most-used canvas widths (full table: paper-canvas-specs.md)
+
+IEEEtran `figure*` = **516pt**, `figure` = **252pt**; elsarticle single-column ≈ **390pt**.
+
 ## Canonical call skeleton
 
 ```js
