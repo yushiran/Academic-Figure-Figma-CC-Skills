@@ -53,8 +53,13 @@ def to_svg(icon, colour="#000000"):
             f'viewBox="0 0 {width} {height}" fill="{colour}">{body}</svg>')
 
 
-if __name__ == "__main__":
-    LIMIT = int(sys.argv[2]) if len(sys.argv) > 2 else 8
-    for entry in search(sys.argv[1], LIMIT):
+def main():
+    """CLI: search <query> [page_size] and print id, name, svg size."""
+    limit = int(sys.argv[2]) if len(sys.argv) > 2 else 8
+    for entry in search(sys.argv[1], limit):
         svg = to_svg(entry)
         print(f'{entry["id"]}\t{entry["name"][:34]:<34}\t{len(svg)}B')
+
+
+if __name__ == "__main__":
+    main()

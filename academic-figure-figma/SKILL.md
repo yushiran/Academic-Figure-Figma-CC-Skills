@@ -33,6 +33,10 @@ is the slow path this skill replaces. Icons come from the local cache first
    — CDNs mislabel (cache manifest records which marks are already verified).
 6. **Screenshot after every wave**, inside the same call. Check: text overflow,
    single-headed arrows pointing with the flow, whitespace balance, terminology.
+7. **Formulas are typeset, not typed.** Any fraction, sum, radical or operator goes
+   through the latex2svg pipeline (cheatsheet §Formulas); `mathText()` only for
+   simple sub/superscripts in labels. User-made formula components (e.g. Math-X)
+   are reused via `findAll` + `createInstance`, never redrawn.
 
 ## Workflow
 

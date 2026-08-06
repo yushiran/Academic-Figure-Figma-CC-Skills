@@ -21,11 +21,30 @@ the Plugin API typings. Stay inside this subset; it is sufficient and verified.
 
 `createFrame` `createText` `createLine` `createPolygon` `createNodeFromSvg`
 
+Plus the **component-reuse subset** (canvas-tested): `figma.createComponentFromNode(node)`,
+`component.createInstance()`, and `page.findAll(n => n.type === 'COMPONENT')` to locate
+components the user made by hand (e.g. Math-X formula objects) and place instances.
+
 **Banned for paper figures** — they add API complexity with zero benefit here:
 Auto Layout (`layoutMode`, `layoutSizing*`, `primaryAxisSizingMode`, `createAutoLayout`),
-Components/Variants/Instances, Variables/Tokens/Styles, `figma.createImage*`,
-`loadAllPagesAsync`, `setPluginData`, Sticky/Connector (FigJam-only anyway).
+variant sets / component properties / published-library workflows, Variables/Tokens/Styles,
+`figma.createImage*`, `loadAllPagesAsync`, `setPluginData`, Sticky/Connector (FigJam-only).
 Absolute x/y positioning inside plain frames is the whole layout model.
+
+## Formulas (canvas-tested pipeline)
+
+Real math typesetting (fractions, sums, radicals) comes from LaTeX, not text nodes:
+
+```bash
+uv run --with matplotlib python scripts/latex2svg.py 'W_k = \frac{\exp(-R_k)}{\sum_j \exp(-R_j)}' /tmp/eq.svg 10
+```
+
+Read the SVG, inline it in the call, `figma.createNodeFromSvg(svg)`, `rescale` to
+target width (a display equation ≈ 60-70% of chip width; inline ≈ text cap-height).
+STIX fonts match Tinos body text; `<defs>+<use>` glyph structure imports cleanly.
+To reuse one formula many times: `createComponentFromNode` once, `createInstance`
+per placement. Reserve `mathText()` for plain sub/superscripts inside labels —
+never for fractions or operators.
 
 ## Core facts (each one is a real trap)
 
