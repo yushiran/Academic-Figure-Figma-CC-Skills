@@ -19,10 +19,20 @@
 
 上游生图管线（[studio-pro](https://github.com/c-narcissus/paper-framework-figure-studio-pro)、[PaperBanana](https://github.com/llmsresearch/paperbanana)）产出栅格候选图，适合探索构图、无法手工微调。本技能让 **Claude Code 通过官方 Figma MCP 直接操作画布**，把候选图或草图落成**可编辑、论文精确尺寸的矢量成稿**：真实印刷宽度、真矢量图标、术语与论文源逐项对齐。
 
+## 🎬 实况演示
+
+<!-- VIDEO_EMBED_ZH -->
+<p align="center">
+  <a href="assets/demo.mp4"><img src="assets/demo-cover.png" width="820" alt="Claude Code 驱动 Figma 绘制论文插图"></a>
+</p>
+
+<p align="center"><sub>左：Figma 画布实时成图 · 右：Claude Code 驱动绘制 · <a href="assets/demo.mp4">点击播放（2:31）</a></sub></p>
+
+全程无人工干预：建骨架 → 三路并行填充 → 一次装配 25 根端到端箭头 → 截图自查，自查中发现两根 memory 线穿过了 cross-attention 方块并自行改线。
+
 ## 📰 News
 
 > - **2026-08** · v0.1 发布：五步工作流 + 五份 reference + iconfont 免登录搜索脚本。
-> - **即将发布** · 🎬 实况视频：上方 Figma 画布实时成图，右侧 Claude Code 驱动绘制。
 
 ## 📦 技能结构
 
