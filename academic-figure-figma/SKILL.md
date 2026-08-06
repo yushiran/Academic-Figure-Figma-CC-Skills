@@ -44,7 +44,9 @@ is the slow path this skill replaces. Icons come from the local cache first
 7. **One element, one node; one figure, one style table.** Arrows are single
    vectorNetwork nodes (never line+polygon fragments). Same-kind elements are
    generated from one data table with STYLE tokens; end every session with
-   `auditConsistency()` and fix any unplanned distinct value.
+   `auditFigure()` — structured lint for font floor, ink overflow, block
+   overlap, arrow-through-block, buried heads and style drift — and fix every
+   ERROR before asking the user to review.
 8. **Formulas are typeset, not typed.** Any fraction, sum, radical or operator goes
    through the latex2svg pipeline (cheatsheet §Formulas); `mathText()` only for
    simple sub/superscripts in labels. User-made formula components (e.g. Math-X)

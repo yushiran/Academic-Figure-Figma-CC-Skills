@@ -88,10 +88,22 @@ return { createdNodeIds: [/* every id */] };
 - One `STYLE` token table per figure (line weight, font-size ramp, radius, dash);
   every element reads tokens — no inline magic numbers.
 - Same-kind blocks come from one data table + one loop, never hand-placed one by one.
-- Before declaring done run `auditConsistency(art)` — distinct strokeWeights beyond
-  plan = drift. Known trap it catches: SVG symbols change stroke weight under
-  `rescale` (a 1.2 stroke at 0.55 scale becomes 0.66) — after rescaling an injected
-  SVG, reset its vectors' strokeWeight to STYLE.line.
+- Before declaring done run `auditFigure(art)` — structured lint returning
+  `{findings, errors, warnings, consistency}`. Checks: text below 6pt (WARN),
+  text INK outside its parent frame (ERROR; judged on renderBounds, so an
+  oversized-but-empty text node is not flagged), partial overlap of sibling
+  blocks (ERROR; full containment = layering, OK), an arrow segment crossing a
+  block interior (ERROR; tail/head endpoints exempt, interior corner vertices
+  NOT — a corner inside a block means the route goes through it), arrow head
+  buried >3pt inside a block (WARN). Fix every ERROR before user review.
+- Grouping frames arrows may legitimately cross must be named `*-stack`,
+  `*-group`, `*-region`, `*-panel` or `*-container` (or passed via
+  `auditFigure(art, {passThrough: ['name']})`) — they are exempt from the
+  arrow and overlap checks.
+- Style drift: `auditConsistency` (also embedded in the auditFigure result) —
+  distinct strokeWeights beyond plan = drift. Known trap it catches: SVG symbols
+  change stroke weight under `rescale` (a 1.2 stroke at 0.55 scale becomes 0.66)
+  — after rescaling an injected SVG, reset its vectors' strokeWeight to STYLE.line.
 
 ## Error → fix table
 

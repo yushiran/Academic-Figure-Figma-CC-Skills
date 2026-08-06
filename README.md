@@ -30,23 +30,9 @@
 
 全程无人工干预：建骨架 → 三路并行填充 → 一次装配 25 根端到端箭头 → 截图自查，自查中发现两根 memory 线穿过了 cross-attention 方块并自行改线。
 
-## ✅ 能力矩阵
-
-| 能力 | 状态 |
-| --- | --- |
-| 栅格参考图复刻为可编辑矢量 | ✅ |
-| 文字描述 / 草图生成框架图 | ✅ |
-| 论文术语与数字预核验 | ✅ |
-| IEEE / AAAI / NeurIPS / Elsevier 精确画布尺寸 | ✅ |
-| LaTeX 公式矢量化 | ✅ |
-| 图标缓存与逐个目检 | ✅ |
-| 多路并行绘制 | ✅ |
-| 样式一致性自动审计 | ✅ |
-| 引导式 Figma MCP 配置 | ✅ |
-| 结构化 figure lint（溢出/穿块/字号底线） | 🚧 规划中 |
-
 ## 📰 News
 
+> - **2026-08** · v0.5：auditFigure() 结构化 figure lint——字号底线、墨迹溢出、方块重叠、箭头穿块、箭头埋头，真画布种子缺陷验证。
 > - **2026-08** · v0.4：单节点端到端箭头、STYLE 令牌 + 一致性审计、latex2svg 公式管线、并行绘制协议、实况演示视频。
 > - **2026-08** · v0.1 发布：五步工作流 + 五份 reference + iconfont 免登录搜索脚本。
 
@@ -69,7 +55,7 @@ academic-figure-figma/
 | `references/figure-grammar.md` | 图语法契约：箭头双端证据、禁虚假中继、变量上线不占框、主线居中、反 AI 配色 |
 | `references/icon-sourcing.md` | Lucide / lobe-icons / simpleicons / iconfont API 矢量获取与逐个核验 |
 | `references/build-workflow.md` | 增量构建、多栏配平公式、截图自查清单、踩坑记录 |
-| `scripts/figma_lib.js` | 实战沉淀的绘图库：单节点端到端箭头、stageColumn/chip/brace、auditConsistency |
+| `scripts/figma_lib.js` | 实战沉淀的绘图库：单节点端到端箭头、stageColumn/chip/brace、auditFigure 结构化 lint |
 | `scripts/latex2svg.py` | LaTeX → STIX（Times 风格）→ 可注入 SVG 的公式管线 |
 | `scripts/iconfont_search.py` | iconfont.cn 免登录搜索 → 可注入 SVG |
 | `scripts/assets/icons/` | 32 个预清洗图标缓存（24 Lucide + 8 AI 品牌标，逐个目检核验） |

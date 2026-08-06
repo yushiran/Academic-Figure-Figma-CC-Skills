@@ -113,12 +113,99 @@ async function selfLoop(parent, x, y, w, rise, colour) {
 function auditConsistency(root) {
   const sw = new Set(), fs = new Set();
   for (const n of root.findAll(() => true)) {
-    if ('strokeWeight' in n && n.strokes && n.strokes.length)
+    if ('strokeWeight' in n && Array.isArray(n.strokes) && n.strokes.length)
       sw.add(Math.round(n.strokeWeight * 100) / 100);
     if (n.type === 'TEXT' && typeof n.fontSize === 'number') fs.add(n.fontSize);
   }
   return { strokeWeights: [...sw].sort(), fontSizes: [...fs].sort(),
            arrowNodes: root.findAll(n => n.type === 'VECTOR').length };
+}
+
+// ---- auditFigure: structured lint (canvas-tested). Run at end of every session;
+// fix every ERROR before asking the user to review. Checks: font floor, text ink
+// overflowing its parent, partial block overlap, arrow segment through a block,
+// arrow head buried deep inside a block, plus auditConsistency style drift.
+// Grouping frames named *-stack/-group/-region/-panel/-container (or listed in
+// opts.passThrough) are exempt: arrows may legitimately cross background groups.
+function _bb(n) { const b = n.absoluteBoundingBox; return b ? { x: b.x, y: b.y, w: b.width, h: b.height } : null; }
+function _ink(n) { const b = n.absoluteRenderBounds || n.absoluteBoundingBox; return b ? { x: b.x, y: b.y, w: b.width, h: b.height } : null; }
+function _inRect(px, py, r, m) { return px >= r.x - m && px <= r.x + r.w + m && py >= r.y - m && py <= r.y + r.h + m; }
+function _clipSeg(x1, y1, x2, y2, r) {   // Liang-Barsky; null = no intersection
+  let t0 = 0, t1 = 1; const dx = x2 - x1, dy = y2 - y1;
+  const p = [-dx, dx, -dy, dy], q = [x1 - r.x, r.x + r.w - x1, y1 - r.y, r.y + r.h - y1];
+  for (let i = 0; i < 4; i++) {
+    if (p[i] === 0) { if (q[i] < 0) return null; }
+    else { const t = q[i] / p[i];
+      if (p[i] < 0) { if (t > t1) return null; if (t > t0) t0 = t; }
+      else { if (t < t0) return null; if (t < t1) t1 = t; } }
+  }
+  return [t0, t1];
+}
+function _isAncestor(a, n) { let p = n.parent; while (p) { if (p === a) return true; p = p.parent; } return false; }
+function auditFigure(root, opts) {
+  const o = Object.assign({ minFontPt: 6, headDepth: 3, overlapTol: 0.5, throughLen: 2, passThrough: [] }, opts || {});
+  const skip = n => /-(stack|group|region|panel|container)$/i.test(n.name) || o.passThrough.indexOf(n.name) >= 0;
+  const out = [];
+  const texts = root.findAll(n => n.type === 'TEXT');
+  const vecs = root.findAll(n => n.type === 'VECTOR');
+  const blocks = root.findAll(n => n.type === 'FRAME' && !skip(n) &&
+    Array.isArray(n.fills) && n.fills.length && Array.isArray(n.strokes) && n.strokes.length);
+  const small = {};
+  for (const t of texts) if (typeof t.fontSize === 'number' && t.fontSize < o.minFontPt) {
+    const k = Math.round(t.fontSize * 10) / 10; small[k] = (small[k] || 0) + 1; }
+  for (const k in small) out.push({ level: 'WARN', check: 'fontFloor', node: small[k] + ' text nodes', detail: k + 'pt < ' + o.minFontPt + 'pt floor' });
+  // overflow judged on rendered INK (renderBounds), not the node box: an oversized
+  // but empty text node is not a defect the reader can see
+  for (const t of texts) {
+    const p = t.parent; if (!p || p.type !== 'FRAME') continue;
+    const tb = _ink(t), pb = _bb(p); if (!tb || !pb) continue;
+    const ov = Math.max(pb.x - tb.x, tb.x + tb.w - (pb.x + pb.w), pb.y - tb.y, tb.y + tb.h - (pb.y + pb.h));
+    if (ov > 0.5) out.push({ level: 'ERROR', check: 'textOverflow', node: JSON.stringify(t.characters.slice(0, 24)), detail: 'ink exceeds ' + p.name + ' by ' + ov.toFixed(1) + 'pt' });
+  }
+  // partial overlap between sibling blocks; full containment = layering, OK
+  for (let i = 0; i < blocks.length; i++) for (let j = i + 1; j < blocks.length; j++) {
+    const A = blocks[i], B = blocks[j]; if (A.parent !== B.parent) continue;
+    const a = _bb(A), b = _bb(B); if (!a || !b) continue;
+    const ix = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+    const iy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+    if (ix > o.overlapTol && iy > o.overlapTol) {
+      const aInB = a.x >= b.x - 1 && a.y >= b.y - 1 && a.x + a.w <= b.x + b.w + 1 && a.y + a.h <= b.y + b.h + 1;
+      const bInA = b.x >= a.x - 1 && b.y >= a.y - 1 && b.x + b.w <= a.x + a.w + 1 && b.y + b.h <= a.y + a.h + 1;
+      if (!aInB && !bInA) out.push({ level: 'ERROR', check: 'blockOverlap', node: A.name + ' × ' + B.name, detail: ix.toFixed(1) + '×' + iy.toFixed(1) + 'pt' });
+    }
+  }
+  // tail/head endpoints may sit on a block (arrows start/end there); an interior
+  // CORNER vertex inside a block = the arrow is routed through it
+  for (const v of vecs) {
+    const net = v.vectorNetwork; if (!net || !net.vertices.length) continue;
+    const m = v.absoluteTransform;
+    const abs = net.vertices.map(q => ({ x: m[0][0] * q.x + m[0][1] * q.y + m[0][2], y: m[1][0] * q.x + m[1][1] * q.y + m[1][2] }));
+    const last = net.vertices.length - 1;
+    for (const b of blocks) {
+      if (_isAncestor(b, v)) continue;
+      const r = _bb(b); if (!r) continue;
+      const rIn = { x: r.x + 0.5, y: r.y + 0.5, w: r.w - 1, h: r.h - 1 };
+      for (const s of net.segments) {
+        const p1 = abs[s.start], p2 = abs[s.end];
+        const c = _clipSeg(p1.x, p1.y, p2.x, p2.y, rIn); if (!c) continue;
+        const clipLen = (c[1] - c[0]) * Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        const e1ok = s.start === 0 && _inRect(p1.x, p1.y, r, 0.5);
+        const e2ok = s.end === last && _inRect(p2.x, p2.y, r, 0.5);
+        if (clipLen > o.throughLen && !e1ok && !e2ok)
+          out.push({ level: 'ERROR', check: 'arrowThroughBlock', node: v.name + ' × ' + b.name, detail: clipLen.toFixed(1) + 'pt inside' });
+      }
+      const hv = net.vertices[last];
+      if (hv.strokeCap === 'ARROW_EQUILATERAL') {
+        const h = abs[last];
+        if (h.x > r.x && h.x < r.x + r.w && h.y > r.y && h.y < r.y + r.h) {
+          const depth = Math.min(h.x - r.x, r.x + r.w - h.x, h.y - r.y, r.y + r.h - h.y);
+          if (depth > o.headDepth) out.push({ level: 'WARN', check: 'buriedHead', node: v.name + ' in ' + b.name, detail: depth.toFixed(1) + 'pt deep' });
+        }
+      }
+    }
+  }
+  return { findings: out, errors: out.filter(f => f.level === 'ERROR').length,
+           warnings: out.filter(f => f.level === 'WARN').length, consistency: auditConsistency(root) };
 }
 
 // Flow-type legend, laid out 2xN. items = [[label, colourPaint, dashed], ...]
