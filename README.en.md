@@ -23,10 +23,10 @@ Upstream figure pipelines ([studio-pro](https://github.com/c-narcissus/paper-fra
 
 <!-- VIDEO_EMBED_EN -->
 <p align="center">
-  <a href="assets/demo.mp4"><img src="assets/demo-cover.png" width="820" alt="Claude Code driving Figma to draw a paper figure"></a>
+  <img src="assets/demo.gif" width="880" alt="Claude Code driving Figma to draw a paper figure">
 </p>
 
-<p align="center"><sub>Left: the Figma canvas filling in live · Right: Claude Code driving it · <a href="assets/demo.mp4">play (2:31)</a></sub></p>
+<p align="center"><sub>Left: the Figma canvas filling in live · Right: Claude Code driving it (6x speed) · <a href="assets/demo.mp4">full-speed mp4 (2:31)</a></sub></p>
 
 No human intervention: skeleton → three parallel fill calls → one assembly pass laying 25 end-to-end arrows → screenshot self-review, which caught two memory arrows piercing the cross-attention block and rerouted them.
 

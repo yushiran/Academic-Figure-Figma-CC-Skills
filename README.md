@@ -23,10 +23,10 @@
 
 <!-- VIDEO_EMBED_ZH -->
 <p align="center">
-  <a href="assets/demo.mp4"><img src="assets/demo-cover.png" width="820" alt="Claude Code 驱动 Figma 绘制论文插图"></a>
+  <img src="assets/demo.gif" width="880" alt="Claude Code 驱动 Figma 绘制论文插图">
 </p>
 
-<p align="center"><sub>左：Figma 画布实时成图 · 右：Claude Code 驱动绘制 · <a href="assets/demo.mp4">点击播放（2:31）</a></sub></p>
+<p align="center"><sub>左：Figma 画布实时成图 · 右：Claude Code 驱动绘制（6 倍速）· <a href="assets/demo.mp4">原速高清 mp4（2:31）</a></sub></p>
 
 全程无人工干预：建骨架 → 三路并行填充 → 一次装配 25 根端到端箭头 → 截图自查，自查中发现两根 memory 线穿过了 cross-attention 方块并自行改线。
 
