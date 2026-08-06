@@ -22,7 +22,8 @@ is the slow path this skill replaces. Icons come from the local cache first
    match the paper canon verbatim; when the paper is inconsistent, ask the user to
    pick. Never hard-code section numbers into a figure.
 2. **Basic building blocks only.** Frame, Text, Line, Polygon, SVG import, absolute
-   x/y. Auto Layout, Components, Variables, Styles are banned (cheatsheet §Allowed).
+   x/y, plus the component-reuse subset (createComponentFromNode / createInstance).
+   Auto Layout, variant sets, Variables, Styles are banned (cheatsheet §Allowed).
 3. **Design at final print size** (references/paper-canvas-specs.md). Never draw big
    and shrink — fonts fall below the 6pt floor.
 4. **Figure grammar** (references/figure-grammar.md): evidence for every arrow, no
