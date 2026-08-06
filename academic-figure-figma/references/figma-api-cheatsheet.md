@@ -57,8 +57,8 @@ never for fractions or operators.
 | lineHeight/letterSpacing | object form: `{unit:'PIXELS', value: 12}` — bare numbers throw |
 | resize vs rescale | `resize(w,h)` sets box; `rescale(k)` scales children+strokes too — use rescale for SVG icons (`rescale(target/node.width)`) |
 | Line length | `line.resize(len, 0)`; direction via `rotation` (-90 = downward) |
-| Single-head arrows | shaft `strokeCap:'NONE'` + 3-point polygon head. `strokeCap:'ARROW_LINES'` puts heads on BOTH ends. |
-| Polygon head placement | rightward: `rotation=-90, x=tip-3.6, y=mid-2.3`; downward: `rotation=180, x=mid-1.8, y=tip-4.6` |
+| Arrows = ONE node, always | `lib arrow(parent, pts, opts)`: createVector + `setVectorNetworkAsync`, final vertex `strokeCap:'ARROW_EQUILATERAL'`, others `'NONE'`. Straight/elbow/curved/dashed all single Vector — draggable as a unit. NEVER assemble arrows from line+polygon fragments (uneditable, drift apart, unreadable layer tree). |
+| Arrow helpers are async | `await arrow/arrowH/arrowV/elbowArrow/curveArrow/selfLoop(...)` |
 | Find nodes | `await figma.getNodeByIdAsync(id)`, `parent.children.filter(...)`, `node.findAll(n=>...)` |
 | Batch edits by id | when re-positioning arrows/dividers, use an EXPLICIT id list. Filtering `type==='LINE'` once caught a dashed divider and dragged it 112pt. |
 | Dashed lines | `n.dashPattern = [3,3]` |
@@ -82,6 +82,16 @@ const art = await figma.getNodeByIdAsync("9:2");   // or figma.createFrame() on 
 await art.screenshot({ scale: 2.6 });
 return { createdNodeIds: [/* every id */] };
 ```
+
+## Consistency discipline (the "细看全是问题" killer)
+
+- One `STYLE` token table per figure (line weight, font-size ramp, radius, dash);
+  every element reads tokens — no inline magic numbers.
+- Same-kind blocks come from one data table + one loop, never hand-placed one by one.
+- Before declaring done run `auditConsistency(art)` — distinct strokeWeights beyond
+  plan = drift. Known trap it catches: SVG symbols change stroke weight under
+  `rescale` (a 1.2 stroke at 0.55 scale becomes 0.66) — after rescaling an injected
+  SVG, reset its vectors' strokeWeight to STYLE.line.
 
 ## Error → fix table
 

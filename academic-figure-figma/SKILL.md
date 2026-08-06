@@ -1,6 +1,6 @@
 ---
 name: academic-figure-figma
-description: Use when the user wants a paper figure (framework, pipeline, architecture, method overview) drawn, rebuilt, or refined as an editable vector in Figma via Claude Code — including reproducing a candidate/reference image (e.g. studio-pro C01-C04) at exact print size, or when Figma MCP quota/connection issues block drawing.
+description: Use when the user wants a paper figure (framework, pipeline, architecture, method overview) drawn, rebuilt, or refined as an editable vector in Figma via Claude Code — including reproducing a candidate/reference image (e.g. studio-pro C01-C04) at exact print size. Also use when the user needs to set up or fix the Claude Code-Figma connection: installing the Figma MCP plugin, OAuth/authentication (incl. remote sessions), seat or quota problems, "figma 连不上/怎么配置", or a first-run guided setup.
 ---
 
 # Academic Figure in Figma (Claude Code)
@@ -34,15 +34,24 @@ is the slow path this skill replaces. Icons come from the local cache first
    — CDNs mislabel (cache manifest records which marks are already verified).
 6. **Screenshot after every wave**, inside the same call. Check: text overflow,
    single-headed arrows pointing with the flow, whitespace balance, terminology.
-7. **Formulas are typeset, not typed.** Any fraction, sum, radical or operator goes
+7. **One element, one node; one figure, one style table.** Arrows are single
+   vectorNetwork nodes (never line+polygon fragments). Same-kind elements are
+   generated from one data table with STYLE tokens; end every session with
+   `auditConsistency()` and fix any unplanned distinct value.
+8. **Formulas are typeset, not typed.** Any fraction, sum, radical or operator goes
    through the latex2svg pipeline (cheatsheet §Formulas); `mathText()` only for
    simple sub/superscripts in labels. User-made formula components (e.g. Math-X)
    are reused via `findAll` + `createInstance`, never redrawn.
 
 ## Workflow
 
+**First run / connection problems — guided setup.** If Figma MCP tools are missing,
+auth fails, or whoami shows a View seat, switch to the five-step tutorial in
+references/figma-mcp-setup.md (§Tutorial): Claude leads, verifies each step, and
+returns here when drawing-ready.
+
 **Step 0 — Preflight.** `whoami` (quota-exempt) → seat must be Full with a paid or
-education plan, else fix first (references/figma-mcp-setup.md). Pick canvas width
+education plan, else run the setup tutorial first (references/figma-mcp-setup.md). Pick canvas width
 from the venue (references/paper-canvas-specs.md). Produce the Step-0 correctness
 audit table (rule 1) and the figure-grammar plan (rule 4). Read
 `scripts/figma_lib.js` and the icon cache manifest now — every later call pastes the
@@ -60,8 +69,10 @@ containers simultaneously; never touch siblings or globals.
 flow type), legend (`legendRow`), per-column balance (`balanceColumn`), artboard trim.
 Keep the returned arrow ids for later adjustments — never re-find arrows by type.
 
-**Step 4 — Review loop.** Screenshot at 2.5-3x; run rule 6 plus the error vocabulary
-at the end of references/figure-grammar.md. Independent fixes may fan out again.
+**Step 4 — Review loop.** Screenshot at 2.5-3x AND re-read the reference image
+side-by-side (structure being right is not enough — compare density, spacing,
+line routing against the original). Run rule 6, `auditConsistency()`, plus the
+error vocabulary at the end of references/figure-grammar.md. Independent fixes may fan out again.
 Stop when clean; ask the user to review in Figma at 100% zoom; user exports PDF.
 
 ## References

@@ -59,32 +59,66 @@ function stageColumn(parent, x, y, w, h, hue, title, titleSize) {
   return box;
 }
 
-// Single-headed horizontal arrow (pointing right). NEVER strokeCap ARROW_LINES
-// for one head — it arrows both ends.
-function arrowH(parent, x, y, len, colour, dashed) {
-  const l = figma.createLine();
-  l.x = x; l.y = y; l.resize(Math.max(1, len - 3.6), 0);
-  l.strokes = [colour]; l.strokeWeight = 0.9; l.strokeCap = 'NONE';
-  if (dashed) l.dashPattern = [2, 2];
-  parent.appendChild(l);
-  const h = figma.createPolygon();
-  h.pointCount = 3; h.resize(3.6, 4.6); h.fills = [colour]; h.strokes = [];
-  h.rotation = -90; h.x = x + len - 3.6; h.y = y - 2.3;
-  parent.appendChild(h);
-  return [l.id, h.id];
+// ---- arrows: ALWAYS single-node, end-to-end (vectorNetwork per-vertex caps) ----
+// One arrow = ONE Vector node the user can drag as a unit. Never assemble arrows
+// from line+polygon fragments: they are uneditable and drift apart.
+// STYLE tokens: define once per figure; every helper reads them. Override before use.
+const STYLE = { line: 0.7, blockStroke: 0.7, dash: [2, 2], radius: 2.5 };
+
+// arrow(parent, [[x,y],...], opts) -> single Vector. Straight (2 pts) or elbow (n pts).
+// opts: {dashed, noHead, name, curve:{tangentStart:{x,y}, tangentEnd:{x,y}}} (curve: 2 pts only)
+async function arrow(parent, pts, opts) {
+  const o = opts || {};
+  const v = figma.createVector(); parent.appendChild(v);
+  const verts = pts.map((q, i) => ({ x: q[0], y: q[1],
+    strokeCap: (i === pts.length - 1 && !o.noHead) ? 'ARROW_EQUILATERAL' : 'NONE' }));
+  const segs = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const g = { start: i, end: i + 1 };
+    if (o.curve && pts.length === 2) { g.tangentStart = o.curve.tangentStart; g.tangentEnd = o.curve.tangentEnd; }
+    segs.push(g);
+  }
+  await v.setVectorNetworkAsync({ vertices: verts, segments: segs, regions: [] });
+  v.strokes = [o.colour || INK]; v.strokeWeight = STYLE.line;
+  if (o.dashed) v.dashPattern = STYLE.dash;
+  v.x = Math.min(...pts.map(q => q[0])); v.y = Math.min(...pts.map(q => q[1]));
+  v.name = o.name || 'arrow';
+  return v;
 }
 
-// Single-headed vertical arrow (pointing down).
-function arrowV(parent, x, y, len, colour) {
-  const l = figma.createLine();
-  l.x = x; l.y = y; l.resize(Math.max(1, len - 3.6), 0); l.rotation = -90;
-  l.strokes = [colour]; l.strokeWeight = 0.9; l.strokeCap = 'NONE';
-  parent.appendChild(l);
-  const h = figma.createPolygon();
-  h.pointCount = 3; h.resize(3.6, 4.6); h.fills = [colour]; h.strokes = [];
-  h.rotation = 180; h.x = x - 1.8; h.y = y + len - 4.6;
-  parent.appendChild(h);
-  return [l.id, h.id];
+// Convenience wrappers (all async now)
+async function arrowH(parent, x, y, len, colour, dashed) {
+  return arrow(parent, [[x, y], [x + len, y]], { colour, dashed });
+}
+async function arrowV(parent, x, y, len, colour) {
+  return arrow(parent, [[x, y], [x, y + len]], { colour });
+}
+async function elbowArrow(parent, pts, colour, dashed) {
+  return arrow(parent, pts, { colour, dashed, name: 'elbow' });
+}
+async function curveArrow(parent, x1, y1, x2, y2, bend, colour, dashed) {
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len * bend, ny = dx / len * bend;
+  return arrow(parent, [[x1, y1], [x2, y2]],
+    { colour, dashed, name: 'curve',
+      curve: { tangentStart: { x: dx * 0.3 + nx, y: dy * 0.3 + ny },
+               tangentEnd:   { x: -dx * 0.3 + nx, y: -dy * 0.3 + ny } } });
+}
+async function selfLoop(parent, x, y, w, rise, colour) {
+  return curveArrow(parent, x + w, y, x, y, (rise || 12), colour, true);
+}
+
+// Consistency audit: distinct style values across a subtree. Run before declaring
+// done; more than the expected count of any list = style drift to fix.
+function auditConsistency(root) {
+  const sw = new Set(), fs = new Set();
+  for (const n of root.findAll(() => true)) {
+    if ('strokeWeight' in n && n.strokes && n.strokes.length)
+      sw.add(Math.round(n.strokeWeight * 100) / 100);
+    if (n.type === 'TEXT' && typeof n.fontSize === 'number') fs.add(n.fontSize);
+  }
+  return { strokeWeights: [...sw].sort(), fontSizes: [...fs].sort(),
+           arrowNodes: root.findAll(n => n.type === 'VECTOR').length };
 }
 
 // Flow-type legend, laid out 2xN. items = [[label, colourPaint, dashed], ...]
@@ -141,57 +175,8 @@ function ellipse(parent, x, y, w, h, hue) {
 const _hex = p => { const c = p.color;
   return '#' + [c.r, c.g, c.b].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join(''); };
 
-// Multi-segment elbow arrow through absolute points [[x,y],...], head at the end.
-// Auto-orients the head from the last segment's direction.
-function elbowArrow(parent, pts, colour, dashed) {
-  const d = 'M ' + pts.map(p => p.join(' ')).join(' L ');
-  const [x2, y2] = pts[pts.length - 1], [x1, y1] = pts[pts.length - 2];
-  const ang = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-  // viewBox must enclose the whole path or Figma clips it to nothing
-  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
-  const mnx = Math.min(...xs) - 2, mny = Math.min(...ys) - 2;
-  const bw = Math.max(...xs) - mnx + 2, bh = Math.max(...ys) - mny + 2;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${mnx} ${mny} ${bw} ${bh}">` +
-    `<path d="${d}" fill="none" stroke="${_hex(colour)}" stroke-width="0.9"` +
-    (dashed ? ' stroke-dasharray="2 2"' : '') + `/></svg>`;
-  const node = figma.createNodeFromSvg(svg);
-  node.name = 'elbow'; parent.appendChild(node); node.x = mnx; node.y = mny;
-  const h = figma.createPolygon();
-  h.pointCount = 3; h.resize(3.6, 4.6); h.fills = [colour]; h.strokes = [];
-  h.rotation = -90 - ang;
-  h.x = x2 - 1.8 - 2.3 * Math.cos(ang * Math.PI / 180);
-  h.y = y2 - 2.3 - 2.3 * Math.sin(ang * Math.PI / 180);
-  parent.appendChild(h);
-  return [node, h];
-}
 
-// Curved arrow (quadratic bezier) from (x1,y1) to (x2,y2); bend>0 bows up/left.
-function curveArrow(parent, x1, y1, x2, y2, bend, colour, dashed) {
-  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
-  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1;
-  const cx = mx - (dy / len) * bend, cy = my + (dx / len) * bend;
-  const mnx = Math.min(x1, x2, cx) - 2, mny = Math.min(y1, y2, cy) - 2;
-  const bw = Math.max(x1, x2, cx) - mnx + 2, bh = Math.max(y1, y2, cy) - mny + 2;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${mnx} ${mny} ${bw} ${bh}">` +
-    `<path d="M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}" fill="none" ` +
-    `stroke="${_hex(colour)}" stroke-width="0.9"` +
-    (dashed ? ' stroke-dasharray="2 2"' : '') + `/></svg>`;
-  const node = figma.createNodeFromSvg(svg);
-  node.name = 'curve'; parent.appendChild(node); node.x = mnx; node.y = mny;
-  const ang = Math.atan2(y2 - cy, x2 - cx) * 180 / Math.PI;
-  const h = figma.createPolygon();
-  h.pointCount = 3; h.resize(3.6, 4.6); h.fills = [colour]; h.strokes = [];
-  h.rotation = -90 - ang;
-  h.x = x2 - 1.8 - 2.3 * Math.cos(ang * Math.PI / 180);
-  h.y = y2 - 2.3 - 2.3 * Math.sin(ang * Math.PI / 180);
-  parent.appendChild(h);
-  return [node, h];
-}
 
-// Feedback self-loop over a block: arc from (x+w,y) up and back to (x,y).
-function selfLoop(parent, x, y, w, rise, colour) {
-  return curveArrow(parent, x + w, y, x, y, (rise || 12), colour, true);
-}
 
 // Curly brace spanning `len` pt. side: 'left'|'right'|'top'|'bottom' (tip points away).
 // After rotating a node, its x/y no longer mean its visual top-left.
@@ -205,7 +190,7 @@ function brace(parent, x, y, len, side, colour) {
   const t = 4;   // tip depth
   const d = `M 0 0 C ${t} ${len*0.12} ${t*0.4} ${len*0.38} ${t} ${len/2} C ${t*0.4} ${len*0.62} ${t} ${len*0.88} 0 ${len}`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${t+1} ${len}">` +
-    `<path d="${d}" fill="none" stroke="${_hex(colour)}" stroke-width="0.9" stroke-linecap="round"/></svg>`;
+    `<path d="${d}" fill="none" stroke="${_hex(colour)}" stroke-width="${STYLE.line}" stroke-linecap="round"/></svg>`;
   const node = figma.createNodeFromSvg(svg);
   node.name = 'brace'; parent.appendChild(node);
   if (side === 'left')  node.rotation = 180;
