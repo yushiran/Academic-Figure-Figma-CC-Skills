@@ -47,6 +47,10 @@ is the slow path this skill replaces. Icons come from the local cache first
    `auditFigure()` — structured lint for font floor, ink overflow, block
    overlap, arrow-through-block, buried heads and style drift — and fix every
    ERROR before asking the user to review.
+   **Chip heights are outputs, not inputs.** Size every chip from its text ink
+   via `fitChipToInk()` / `packBox()` (lib) so text can never overflow or be
+   occluded; hand-guessed fixed heights are banned, and any text change means
+   re-running `packBox` on that box before re-laying arrows.
 8. **Formulas are typeset, not typed.** Any fraction, sum, radical or operator goes
    through the latex2svg pipeline (cheatsheet §Formulas); `mathText()` only for
    simple sub/superscripts in labels. User-made formula components (e.g. Math-X)

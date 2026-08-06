@@ -253,6 +253,46 @@ function balanceColumn(box, regionTop, pinnedIds) {
   return d;
 }
 
+// ---- text fitting: text must NEVER overflow or be occluded by its chip ----
+// Size a chip from its text INK (renderBounds: includes descenders and AA),
+// not the node box and never a hand-guessed height. Canvas-proven on the
+// GeoAT-LM figures: fixed heights overflowed, node-box heights still left
+// 1-2pt border strikes, ink-fit linted clean.
+function fitChipToInk(chip, slack) {
+  const t = chip.children.find(c => c.type === 'TEXT');
+  if (!t) return chip.height;
+  const rb = t.absoluteRenderBounds, ab = t.absoluteBoundingBox;
+  const inkH = rb ? rb.height : t.height, inkOff = rb ? rb.y - ab.y : 0;
+  const h = Math.max(Math.ceil(inkH) + (slack === undefined ? 6 : slack), 10);
+  chip.resize(chip.width, h);
+  t.y = (h - inkH) / 2 - inkOff;
+  const ic = chip.children.find(c => c.type === 'FRAME' && /^icon/.test(c.name));
+  if (ic) ic.y = (h - ic.height) / 2;
+  return h;
+}
+
+// Compact a box: cluster children into rows by their current y, ink-fit every
+// chip, stack rows with `gap`, return content height (incl. bottom pad).
+// Corner icons/logos (names icon*/logo*) stay pinned. Re-run after ANY text
+// change, then resize the box to the returned height.
+function packBox(box, topPad, gap) {
+  const skip = n => /^(icon|logo)/.test(n.name);
+  const kids = box.children.filter(n => !skip(n)).sort((a, b) => a.y - b.y);
+  const rows = []; let cur = null, curY = -999;
+  for (const k of kids) {
+    if (Math.abs(k.y - curY) > 5) { cur = [k]; rows.push(cur); curY = k.y; }
+    else cur.push(k);
+  }
+  let y = topPad;
+  for (const row of rows) {
+    for (const m of row) if (m.type === 'FRAME') fitChipToInk(m);
+    const rowH = Math.max(...row.map(m => m.height));
+    for (const m of row) m.y = y + (rowH - m.height) / 2;
+    y += rowH + gap;
+  }
+  return Math.ceil(y - gap + 6);
+}
+
 // Inject a cleaned SVG string as a true vector. colour replaces currentColor.
 function placeSvg(parent, svg, colour, x, y, size, name) {
   const node = figma.createNodeFromSvg(colour ? svg.split('currentColor').join(colour) : svg);

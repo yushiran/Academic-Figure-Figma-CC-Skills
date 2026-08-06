@@ -99,6 +99,18 @@ uv run --with pillow python scripts/extract_palette.py probe ref.png 0.76,0.145 
 - Then override the lib palette with measured stroke/fill pairs BEFORE drawing:
   `PAL.green=[HEX('#5f8b66'),HEX('#e8f0e9')]` — one pair per component role.
 
+## Text fitting (no overflow, ever)
+
+- Flow per chip: `chip()` at fixed WIDTH → `txt()` → `fitChipToInk(chip)`.
+  Height comes from the text's renderBounds (ink), so descenders never sit on
+  the border. `packBox(box, topPad, gap)` does this for a whole box and
+  compacts its rows — the tool for "紧凑一些" requests; box height = its
+  return value.
+- Order matters: text final → packBox → resize box → THEN arrows (arrow
+  endpoints read live geometry). A text edit invalidates heights: re-run
+  packBox on that box and re-lay its arrows.
+- auditFigure's overflow/collision checks are the gate that proves it worked.
+
 ## Consistency discipline (the "细看全是问题" killer)
 
 - One `STYLE` token table per figure (line weight, font-size ramp, radius, dash);
