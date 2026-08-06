@@ -83,6 +83,22 @@ await art.screenshot({ scale: 2.6 });
 return { createdNodeIds: [/* every id */] };
 ```
 
+## Reference colours (measure, don't guess)
+
+```bash
+uv run --with pillow python scripts/extract_palette.py palette ref.png -n 12   # whole-image orientation
+uv run --with pillow python scripts/extract_palette.py palette ref.png --crop 0.67,0.12,0.87,0.47 -n 6
+uv run --with pillow python scripts/extract_palette.py probe ref.png 0.76,0.145 0.935,0.28
+```
+
+- Crop (normalized x0,y0,x1,y1 around ONE component) returns its fill/stroke/text
+  trio directly; probe (block centre = fill, border midpoint = stroke) returns
+  exact points. The GLOBAL palette on a white-background figure is orientation
+  only — anti-aliased edges blend into muddy averages. Near-white background is
+  dropped before quantizing, so shares are relative to coloured pixels.
+- Then override the lib palette with measured stroke/fill pairs BEFORE drawing:
+  `PAL.green=[HEX('#5f8b66'),HEX('#e8f0e9')]` — one pair per component role.
+
 ## Consistency discipline (the "细看全是问题" killer)
 
 - One `STYLE` token table per figure (line weight, font-size ramp, radius, dash);

@@ -11,7 +11,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install pinned pylint and script dependencies
-        run: pip install "pylint==3.3.*" matplotlib pyyaml
+        run: pip install "pylint==3.3.*" matplotlib pyyaml pillow
       - name: Run pylint
         run: pylint $(git ls-files '*.py')
       - name: Validate SKILL.md frontmatter (real YAML parse)

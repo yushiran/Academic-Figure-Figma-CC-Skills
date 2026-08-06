@@ -32,6 +32,7 @@ No human intervention: skeleton → three parallel fill calls → one assembly p
 
 ## 📰 News
 
+> - **2026-08** · v0.6: extract_palette.py reference-colour extraction — per-component fill/stroke/text trio via crop, point probes; colours are measured before drawing, never guessed.
 > - **2026-08** · v0.5: auditFigure() structured figure lint — font floor, ink overflow, block overlap, arrow-through-block, buried heads; verified against seeded defects on a real canvas.
 > - **2026-08** · v0.4: single-node end-to-end arrows, STYLE tokens + consistency audit, latex2svg formula pipeline, parallel drawing protocol, live demo video.
 > - **2026-08** · v0.1 released: five-step workflow + five reference docs + login-free iconfont search script.
@@ -57,6 +58,7 @@ academic-figure-figma/
 | `references/build-workflow.md` | Incremental build, multi-column balancing, screenshot checklist, recorded pitfalls |
 | `scripts/figma_lib.js` | Battle-tested drawing library: single-node end-to-end arrows, stageColumn/chip/brace, auditFigure structured lint |
 | `scripts/latex2svg.py` | LaTeX → STIX (Times-style) → injectable SVG formula pipeline |
+| `scripts/extract_palette.py` | Reference-image colours: per-component crop (fill/stroke/text trio), point probes, global palette (background dropped before quantizing) |
 | `scripts/iconfont_search.py` | iconfont.cn login-free search → injectable SVG |
 | `scripts/assets/icons/` | 32 pre-cleaned cached icons (24 Lucide + 8 AI brand marks, each eye-verified) |
 

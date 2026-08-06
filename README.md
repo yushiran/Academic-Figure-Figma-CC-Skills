@@ -32,6 +32,7 @@
 
 ## 📰 News
 
+> - **2026-08** · v0.6：extract_palette.py 参考图取色——组件裁剪出 fill/stroke/text 三色、坐标探色，画图前量化取色不再目测。
 > - **2026-08** · v0.5：auditFigure() 结构化 figure lint——字号底线、墨迹溢出、方块重叠、箭头穿块、箭头埋头，真画布种子缺陷验证。
 > - **2026-08** · v0.4：单节点端到端箭头、STYLE 令牌 + 一致性审计、latex2svg 公式管线、并行绘制协议、实况演示视频。
 > - **2026-08** · v0.1 发布：五步工作流 + 五份 reference + iconfont 免登录搜索脚本。
@@ -57,6 +58,7 @@ academic-figure-figma/
 | `references/build-workflow.md` | 增量构建、多栏配平公式、截图自查清单、踩坑记录 |
 | `scripts/figma_lib.js` | 实战沉淀的绘图库：单节点端到端箭头、stageColumn/chip/brace、auditFigure 结构化 lint |
 | `scripts/latex2svg.py` | LaTeX → STIX（Times 风格）→ 可注入 SVG 的公式管线 |
+| `scripts/extract_palette.py` | 参考图取色：组件裁剪 fill/stroke/text 三色、坐标探色、全局色板（量化前剔除白底） |
 | `scripts/iconfont_search.py` | iconfont.cn 免登录搜索 → 可注入 SVG |
 | `scripts/assets/icons/` | 32 个预清洗图标缓存（24 Lucide + 8 AI 品牌标，逐个目检核验） |
 

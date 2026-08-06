@@ -51,6 +51,11 @@ is the slow path this skill replaces. Icons come from the local cache first
    through the latex2svg pipeline (cheatsheet §Formulas); `mathText()` only for
    simple sub/superscripts in labels. User-made formula components (e.g. Math-X)
    are reused via `findAll` + `createInstance`, never redrawn.
+9. **Reference colours are measured, not guessed.** When a reference image exists,
+   read component colours with `scripts/extract_palette.py` (cheatsheet
+   §Reference colours): crop mode returns one component's fill/stroke/text trio,
+   probe mode the exact colour at a point. Override the lib `PAL` with the
+   measured hexes before drawing; same-role components share one measured colour.
 
 ## Workflow
 
