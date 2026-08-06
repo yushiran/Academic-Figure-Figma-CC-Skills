@@ -284,9 +284,14 @@ function packBox(box, topPad, gap) {
     else cur.push(k);
   }
   let y = topPad;
+  // bare TEXT rows have no chip to fit: lay them out by INK height, not node
+  // height, or their descenders land on the box's bottom border (found on the
+  // GeoAT-LM Model input body text: 1.2pt border strike)
+  const effH = m => (m.type === 'TEXT' && m.absoluteRenderBounds)
+    ? Math.max(m.height, Math.ceil(m.absoluteRenderBounds.height) + 2) : m.height;
   for (const row of rows) {
     for (const m of row) if (m.type === 'FRAME') fitChipToInk(m);
-    const rowH = Math.max(...row.map(m => m.height));
+    const rowH = Math.max(...row.map(effH));
     for (const m of row) m.y = y + (rowH - m.height) / 2;
     y += rowH + gap;
   }
