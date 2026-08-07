@@ -175,6 +175,14 @@ function auditFigure(root, opts) {
         out.push({ level: 'ERROR', check: 'textBlockCollision', node: JSON.stringify(t.characters.slice(0, 24)) + ' × ' + b.name, detail: Math.min(ix, iy).toFixed(1) + 'pt penetration' });
     }
   }
+  // text ink overlapping another text's ink (stacked captions drifting together)
+  for (let i = 0; i < texts.length; i++) for (let j = i + 1; j < texts.length; j++) {
+    const a = _ink(texts[i]), b = _ink(texts[j]); if (!a || !b) continue;
+    const ix = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+    const iy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+    if (ix > 0.3 && iy > 0.3)
+      out.push({ level: 'ERROR', check: 'textOverlap', node: JSON.stringify(texts[i].characters.slice(0, 14)) + ' × ' + JSON.stringify(texts[j].characters.slice(0, 14)), detail: Math.min(ix, iy).toFixed(1) + 'pt' });
+  }
   // partial overlap between sibling blocks; full containment = layering, OK
   for (let i = 0; i < blocks.length; i++) for (let j = i + 1; j < blocks.length; j++) {
     const A = blocks[i], B = blocks[j]; if (A.parent !== B.parent) continue;

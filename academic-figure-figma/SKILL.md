@@ -50,7 +50,10 @@ is the slow path this skill replaces. Icons come from the local cache first
    **Chip heights are outputs, not inputs.** Size every chip from its text ink
    via `fitChipToInk()` / `packBox()` (lib) so text can never overflow or be
    occluded; hand-guessed fixed heights are banned, and any text change means
-   re-running `packBox` on that box before re-laying arrows.
+   re-running `packBox` on that box before re-laying arrows — **in a fresh
+   call**: text metrics are stale within the call that edited the text, so
+   same-call packing and linting silently pass on real overlaps
+   (cheatsheet §Text fitting, stale-metrics trap).
 8. **Formulas are typeset, not typed.** Any fraction, sum, radical or operator goes
    through the latex2svg pipeline (cheatsheet §Formulas); `mathText()` only for
    simple sub/superscripts in labels. User-made formula components (e.g. Math-X)

@@ -109,7 +109,15 @@ uv run --with pillow python scripts/extract_palette.py probe ref.png 0.76,0.145 
 - Order matters: text final → packBox → resize box → THEN arrows (arrow
   endpoints read live geometry). A text edit invalidates heights: re-run
   packBox on that box and re-lay its arrows.
-- auditFigure's overflow/collision checks are the gate that proves it worked.
+- **Stale-metrics trap: text edits and packing must be in SEPARATE calls.**
+  After changing `fontSize` or `characters`, the node's `.height` and
+  `absoluteRenderBounds` are NOT recomputed within the same execution — a
+  pack or lint run in the same call uses pre-edit metrics and reports clean
+  while the canvas actually overlaps (caught on the one-row training figure:
+  same-call lint said [] with two real text collisions on screen). Edit text
+  in one call, pack + lint in the next.
+- auditFigure's overflow/collision/textOverlap checks are the gate that
+  proves it worked — run them only in a call that made no text edits.
 
 ## Consistency discipline (the "细看全是问题" killer)
 
