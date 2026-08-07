@@ -54,6 +54,7 @@ academic-figure-figma/
 | `references/figma-mcp-setup.md` | MCP 连接、远程会话 OAuth、席位/额度陷阱、教育版免费 200 次/天 |
 | `references/paper-canvas-specs.md` | IEEEtran 252/516pt、elsarticle ≈390pt、AAAI 239/504pt、6pt 字号底线、Tinos 字体 |
 | `references/figure-grammar.md` | 图语法契约：箭头双端证据、禁虚假中继、变量上线不占框、主线居中、反 AI 配色 |
+| `references/figure-styles.md` | 学术绘图风格化：6 种具名风格预设（Nature/IEEE/ML pastel-block/Tol…）、配色构造规则、样板圈选 + hex 映射换肤流程 |
 | `references/icon-sourcing.md` | Lucide / lobe-icons / simpleicons / iconfont API 矢量获取与逐个核验 |
 | `references/build-workflow.md` | 增量构建、多栏配平公式、截图自查清单、踩坑记录 |
 | `scripts/figma_lib.js` | 实战沉淀的绘图库：单节点端到端箭头、stageColumn/chip/brace、auditFigure 结构化 lint |

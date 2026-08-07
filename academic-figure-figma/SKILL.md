@@ -104,6 +104,7 @@ Stop when clean; ask the user to review in Figma at 100% zoom; user exports PDF.
 | references/parallel-drawing.md | at Step 2 |
 | references/paper-canvas-specs.md | at Step 0 (canvas + fonts + palette numbers) |
 | references/figure-grammar.md | at Step 0 planning and Step 4 review |
+| references/figure-styles.md | picking or switching a figure's style/palette: named presets, construction rules, sampler-board + hex-map workflow |
 | references/icon-sourcing.md | only when an icon is NOT in the local cache |
 | references/figma-mcp-setup.md | connection/quota problems only |
 | references/build-workflow.md | deep dives: balancing math, pitfalls, export |

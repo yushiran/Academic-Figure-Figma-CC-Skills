@@ -54,6 +54,7 @@ academic-figure-figma/
 | `references/figma-mcp-setup.md` | MCP connection, OAuth on remote sessions, seat/quota traps, free Education plan (200 calls/day) |
 | `references/paper-canvas-specs.md` | IEEEtran 252/516pt, elsarticle ≈390pt, AAAI 239/504pt, 6pt font floor, Tinos for Times |
 | `references/figure-grammar.md` | Figure grammar: arrow evidence, no false relays, variables on edges, centred mainline, anti-AI palette |
+| `references/figure-styles.md` | Academic figure styling: 6 named presets (Nature / IEEE / ML pastel-block / Tol…), palette construction rules, sampler-board + hex-map restyle workflow |
 | `references/icon-sourcing.md` | Lucide / lobe-icons / simpleicons / iconfont API vector sourcing with per-mark verification |
 | `references/build-workflow.md` | Incremental build, multi-column balancing, screenshot checklist, recorded pitfalls |
 | `scripts/figma_lib.js` | Battle-tested drawing library: single-node end-to-end arrows, stageColumn/chip/brace, auditFigure structured lint |
