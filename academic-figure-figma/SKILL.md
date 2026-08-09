@@ -94,7 +94,8 @@ Keep the returned arrow ids for later adjustments — never re-find arrows by ty
 side-by-side (structure being right is not enough — compare density, spacing,
 line routing against the original). Run rule 6, `auditConsistency()`, plus the
 error vocabulary at the end of references/figure-grammar.md. Independent fixes may fan out again.
-Stop when clean; ask the user to review in Figma at 100% zoom; user exports PDF.
+Stop when clean; ask the user to review in Figma at 100% zoom; user exports PDF — run the
+font-compliance check (references/build-workflow.md §Venue font compliance) before handing it over.
 
 ## References
 
@@ -107,4 +108,4 @@ Stop when clean; ask the user to review in Figma at 100% zoom; user exports PDF.
 | references/figure-styles.md | picking or switching a figure's style/palette: named presets, construction rules, sampler-board + hex-map workflow |
 | references/icon-sourcing.md | only when an icon is NOT in the local cache |
 | references/figma-mcp-setup.md | connection/quota problems only |
-| references/build-workflow.md | deep dives: balancing math, pitfalls, export |
+| references/build-workflow.md | deep dives: balancing math, pitfalls, export + venue font compliance |

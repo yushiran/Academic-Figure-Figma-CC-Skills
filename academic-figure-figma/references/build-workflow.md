@@ -92,3 +92,34 @@ Treat C01-C04/F01-F02 candidates as **layout references only**:
 User exports from Figma directly (File → Export → PDF, 1x) — the artboard is already
 at print size. PNG exports for quick sharing at 2-3x. Keep the artboard free of
 off-canvas scratch nodes before export.
+
+### Venue font compliance
+
+AAAI's author kit rejects a PDF containing **Type 3 fonts, even inside an illustration**,
+requires **every font embedded — figures included**, and requires fonts needing non-Roman
+support (**CID / Identity-H**) to be **converted to outlines or removed, even inside an
+embedded graphics file**. Ship figures as **PDF or high-resolution raster, never
+EPS/PostScript**. Elsevier and IEEE impose equivalent embedding rules, so run the check
+whatever the venue.
+
+**Figma's own PDF export writes Type 3 fonts** — measured, not assumed. Outlining every
+text run removes all fonts from the file and satisfies the rule trivially:
+
+- Figma **SVG export outlines text by default** (`svgOutlineText`), so `download_assets`
+  with `defaultFormat: "svg"` then SVG→PDF is the source-safe route — it reads the frame,
+  never mutates it. Convert with `pymupdf.open("f.svg").convert_to_pdf()`.
+- `TextNode.outlineText()` is **not exposed** in the MCP sandbox; don't plan around it.
+- Never outline in place. If a route needs mutation, duplicate to a scratch frame and
+  delete it afterwards.
+- **Trade-off:** outlined text is no longer selectable, searchable or editable in the PDF.
+  The Figma file stays the editable master; re-export after any text change.
+
+Verify before handing the figure over:
+
+```bash
+uv run --with pymupdf python -c "import pymupdf; d=pymupdf.open(P); print([(f[3],f[2],f[4]) for p in d for f in p.get_fonts(full=True)])"
+```
+
+PASS = empty list (text outlined), or every entry reporting Type 1 / TrueType / OpenType.
+FAIL = any `Type3` entry or any `Identity-H` encoding. Also confirm the page size in points
+matches the target column width.
