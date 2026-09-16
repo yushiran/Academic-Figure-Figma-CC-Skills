@@ -49,6 +49,20 @@ Step-5 screenshot review.
     legend, or caption/body text. In-figure text is for identity and flow; mechanism
     explanations that need full sentences belong in the caption. When a chip needs
     more than ~4 short lines, the surplus moves out.
+11. **Density is a number, and a thin figure is rejected on sight.** Across a row of
+    content tiles, the tile should take **at least two thirds of its pitch** — a 34 pt
+    tile on an 80 pt pitch reads as a wireframe, a 64 pt tile on the same pitch reads as
+    a figure. The gutter carries the flow and nothing else. Measure it before drawing:
+    `tile / pitch >= 0.66`, and the same for the vertical budget, where a 16 pt operation
+    strip floating in a 120 pt panel is the same defect turned sideways.
+
+    **If the content cannot reach that density at the venue's full width, the figure is
+    too wide, not too full.** Split it into single-column figures, each dense, rather than
+    spreading one full-width figure thin. Six image columns need about 64 pt each to read,
+    so six columns want full width and three want a column; choosing the other way round
+    is what produces the "空间利用不好" verdict. DAPS, the reference for this, butts its
+    panels with 3–6 pt gutters, labels rows with rotated text at the edge, puts the legend
+    inside the largest panel, and allocates area by importance rather than evenly.
 
 ## Style rules
 

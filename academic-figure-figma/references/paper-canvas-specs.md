@@ -1,12 +1,20 @@
 # Paper-accurate canvas specs — widths and fonts by venue
 
-Create the Figma artboard at the figure's true print width in **pt** (1 Figma px =
-1 pt) and set text sizes directly — the only way font sizes stay honest.
+Create the Figma artboard at the figure's true print width and set text sizes directly — the
+only way font sizes stay honest.
+
+**Convert through INCHES, never by reusing the number.** A Figma px is 1/72 inch; a **LaTeX
+point is 1/72.27 inch**, and `\the\textwidth` reports LaTeX points. Pasting that number straight
+into the artboard width makes the figure 0.4 % too wide, which is enough for `Overfull \hbox` at
+full width. CVPR's `\textwidth` prints as `496.85625pt`, which is 6.875 in, which is **495 Figma
+px** — not 497. The table below is already in Figma px.
+
+    figma_px = tex_pt / 72.27 * 72
 
 **Ground truth is the venue's class file, not this table.** Verify in one compile:
 
 ```latex
-textwidth=\the\textwidth, columnwidth=\the\columnwidth   % put in the doc body
+\typeout{textwidth=\the\textwidth, columnwidth=\the\columnwidth}   % put in the doc body
 ```
 
 Values marked ≈ are from memory/official artwork guides; measure before finalising.
@@ -19,7 +27,7 @@ Values marked ≈ are from memory/official artwork guides; measure before finali
 | ICML | two column | 3.25 in = **234 pt** | 6.75 in = **486 pt** |
 | AAAI | two column | 3.3125 in = **239 pt** | 7.0 in = **504 pt** |
 | IJCAI | two column | ≈ 234 pt | ≈ 486 pt |
-| CVPR / ICCV / WACV | two column | ≈ **237 pt** | 6.875 in = **497 pt** |
+| CVPR / ICCV / WACV | two column | 3.28125 in = **236 px** | 6.875 in = **495 px** |
 | ECCV (LNCS) | single column | — | 12.2 cm = **347 pt** |
 | ACL / EMNLP / NAACL | two column | ≈ 226 pt | 6.5 in = **470 pt** |
 | IEEE conf (ICASSP, ICME, …) | two column | 3.5 in = **252 pt** | 7.16 in = **516 pt** |

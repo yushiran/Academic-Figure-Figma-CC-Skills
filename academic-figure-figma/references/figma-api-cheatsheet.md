@@ -116,6 +116,11 @@ fields from 0 as black to the maximum as white. State the convention in the capt
 | Corner radius | `n.cornerRadius = 4` |
 | Page switch | `await figma.setCurrentPageAsync(page)` — the sync setter throws. One switch per call max. |
 | New top-level nodes | default to (0,0) — set x/y away from existing content |
+| **Never delete then reuse** | A lookup map built before a removal holds dead references, and the first `n.height` on one throws `The node with id "X" does not exist` — which fails the whole call atomically, so a rebuild that clears its own furniture loses the entire attempt. Cost three retries in one session. **When rebuilding: reparent what you keep OUT of the doomed subtree first, delete, then build the map.** Or simply never delete a node you intend to move — reposition it. |
+| Children are found by position, not by a derived name | Naming a chip `'tr-'+title.slice(0,6)` yields `tr-prior ` with a trailing space, and the lookup silently misses. Index siblings with `parent.children.filter(...).sort((a,b)=>(a.y-b.y)||(a.x-b.x))` and take them in reading order. |
+| A block wider than its gap inverts the arrows | If a block placed between two columns is wider than `pitch - tile`, its edges cross its neighbours, and an `arrow(x1 → x2)` computed from those edges gets `x1 > x2` and silently points backwards. Assert `blockWidth + 2*minShaft <= pitch - tile` before laying anything out. |
+| An arrow under ~8 pt is all head | The `ARROW_EQUILATERAL` cap is about 5 pt long, so a 4 pt connector renders as a lone triangle. Give every shaft 8 pt or more, or drop the arrow and let adjacency carry the flow. |
+| Rotate, then `placeAt` | After setting `rotation`, `x`/`y` no longer mean the visual top-left, so a rotated lane label lands somewhere else and looks like broken text. `placeAt(node, parent, x, y)` fixes it from the bounding boxes. |
 
 ## Most-used canvas widths (full table: paper-canvas-specs.md)
 
