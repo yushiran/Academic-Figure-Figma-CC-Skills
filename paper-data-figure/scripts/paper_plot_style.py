@@ -37,27 +37,36 @@ VENUE = "cvpr"
 FULL, COL = VENUES[VENUE]
 
 # --- Type ----------------------------------------------------------------------------------
-# In-figure text is printed at the size set here, because the figure is never scaled. Keep the
-# base at or just under the caption size of the venue (CVPR captions are 9 pt) so a figure label
-# never shouts louder than the caption, and never go below 6 pt.
-BASE = 8.0
+# In-figure text is printed at the size set here, because the figure is never scaled. The type
+# contract of the sibling academic-figure-figma skill (references/style-contract.md, measured on
+# He Kaiming's figures from MoCo to JiT): every word in a figure is one 6 pt Arial-class sans, and
+# every symbol is the paper body's own maths font, Computer Modern. One size for all labels, ticks
+# and legends; nothing below 6 pt; the 9 pt caption stays the loudest type on the page.
+BASE = 6.0
 FLOOR = 6.0
 
-SERIF = ["Times New Roman", "Nimbus Roman", "Tinos", "Liberation Serif", "DejaVu Serif"]
+# SERIF = ["Times New Roman", "Nimbus Roman", "Tinos", "Liberation Serif", "DejaVu Serif"]   # until 2026-09-16: serif + STIX
+SANS = ["Arimo", "Arial", "Liberation Sans", "Helvetica", "Nimbus Sans", "DejaVu Sans"]      # Arimo = Arial metrics (Google Fonts)
 
 
 def use_style(base: float = BASE) -> None:
     """Install the shared rcParams. Call once at the top of every figure script."""
     matplotlib.rcParams.update({
-        "font.family": "serif",
-        "font.serif": SERIF,
-        "mathtext.fontset": "stix",          # matches Times body text
+        # "font.family": "serif",
+        # "font.serif": SERIF,
+        # "mathtext.fontset": "stix",          # matches Times body text
+        "font.family": "sans-serif",
+        "font.sans-serif": SANS,
+        "mathtext.fontset": "cm",            # Computer Modern: the maths font of a LaTeX body, so $x_t$ matches the text
         "font.size": base,
         "axes.labelsize": base,
         "axes.titlesize": base,              # titles are off by policy; size set for safety
-        "xtick.labelsize": base - 1,
-        "ytick.labelsize": base - 1,
-        "legend.fontsize": base - 1,
+        # "xtick.labelsize": base - 1,
+        # "ytick.labelsize": base - 1,
+        # "legend.fontsize": base - 1,
+        "xtick.labelsize": base,             # one size: a second prose size is the hierarchy the figure does not have
+        "ytick.labelsize": base,
+        "legend.fontsize": base,
         "axes.linewidth": 0.6,
         "xtick.major.width": 0.6,
         "ytick.major.width": 0.6,

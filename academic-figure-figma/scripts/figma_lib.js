@@ -119,6 +119,77 @@ async function reroute(v, pts) {
   v.x = minx; v.y = miny; return v;
 }
 
+// ---- typeset symbols at 1:1 ----
+// A latex2svg.py SVG (fontset cm, fontsize in pt) imports with 1 unit = 1 px, so on a print-size
+// artboard the symbol IS its font size: never rescale it. The glyphs sit in the group `text_1`;
+// `patch_1` is matplotlib's invisible bounding box. Anchor: 'center' (ink centre at x,y),
+// 'left' / 'right' (ink edge at x, ink centre at y), 'baseline' (glyph baseline at y, ink centre at x).
+// The baseline is read from the group's transform="translate(x baseline)". Returns the node.
+function symbol(parent, svg, x, y, anchor, name, colour) {
+  const node = figma.createNodeFromSvg(svg); parent.appendChild(node); node.name = name || 'sym';
+  if (colour) for (const v of node.findAll(n => 'fills' in n && Array.isArray(n.fills) && n.fills.length)) v.fills = [colour];
+  const t = node.findOne(n => n.name === 'text_1') || node;
+  const nb = node.absoluteBoundingBox, tb = t.absoluteRenderBounds || t.absoluteBoundingBox;
+  const ox = tb.x - nb.x, oy = tb.y - nb.y;                      // ink offset inside the node
+  const m = /translate\(([-\d.]+)\s+([-\d.]+)\)/.exec(svg), base = m ? parseFloat(m[2]) : oy + tb.height;
+  const a = anchor || 'center';
+  node.x = a === 'left' ? x - ox : a === 'right' ? x - ox - tb.width : x - ox - tb.width / 2;
+  node.y = a === 'baseline' ? y - base : y - oy - tb.height / 2;
+  return node;
+}
+
+// ---- look at print scale, state the question, keep the log (after VISTA, He et al. 2026) ----
+// inspect(): a print-scale view of the artboard, or of one region of it, returned with the tool
+// result. `question` is what this view must answer and is echoed back so the transcript keeps it.
+// `region` = {x, y, w, h} in artboard pt. Scale 8 shows a 0.5 pt gap as 4 px. A region view is cut
+// from a scaled clone inside a clipping frame that is removed before the call returns.
+async function inspect(art, question, region, scale) {
+  const s = scale || 8;
+  if (!region) { await art.screenshot({ scale: s }); return { question, view: art.name, scale: s }; }
+  const tmp = figma.createFrame(); tmp.name = 'inspect-tmp'; art.parent.appendChild(tmp);
+  tmp.x = art.x + art.width + 400; tmp.y = art.y; tmp.resize(region.w * s, region.h * s);
+  tmp.fills = [S(1, 1, 1)]; tmp.clipsContent = true;
+  const c = art.clone(); tmp.appendChild(c); c.rescale(s); c.x = -region.x * s; c.y = -region.y * s;
+  await tmp.screenshot({ scale: 1 });
+  tmp.remove();
+  return { question, view: art.name + ' ' + JSON.stringify(region), scale: s };
+}
+// snapshot(): one row per direct child of the artboard. Take one at the top of a mutating call and
+// one at the end, and return diffLayout(before, after): every visible change is then listed by the
+// canvas, not recalled from memory (the VISTA rule: say what you expect, then say what changed).
+function snapshot(art) {
+  const hex = p => !p ? '' : p.type === 'SOLID' ? '#' + [p.color.r, p.color.g, p.color.b].map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('').toUpperCase() : p.type;
+  return art.children.map(n => ({ id: n.id, name: n.name, type: n.type, x: +n.x.toFixed(2), y: +n.y.toFixed(2), w: +n.width.toFixed(2), h: +n.height.toFixed(2),
+    text: n.type === 'TEXT' ? n.characters : undefined,
+    font: n.type === 'TEXT' && n.fontName !== figma.mixed ? n.fontName.family + ' ' + n.fontSize : undefined,
+    fill: Array.isArray(n.fills) && n.fills.length && n.fills[0].visible !== false ? hex(n.fills[0]) : undefined,
+    stroke: Array.isArray(n.strokes) && n.strokes.length ? hex(n.strokes[0]) + ' ' + n.strokeWeight : undefined }));
+}
+function diffLayout(before, after) {
+  const A = new Map(before.map(r => [r.id, r])), B = new Map(after.map(r => [r.id, r])), out = [];
+  for (const r of after) {
+    const o = A.get(r.id);
+    if (!o) { out.push(`+ ${r.name} (${r.id}) at ${r.x},${r.y} ${r.w}x${r.h}`); continue; }
+    const d = [];
+    if (Math.abs(o.x - r.x) > 0.05 || Math.abs(o.y - r.y) > 0.05) d.push(`moved ${o.x},${o.y} -> ${r.x},${r.y}`);
+    if (Math.abs(o.w - r.w) > 0.05 || Math.abs(o.h - r.h) > 0.05) d.push(`resized ${o.w}x${o.h} -> ${r.w}x${r.h}`);
+    if (o.text !== r.text) d.push(`text "${o.text}" -> "${r.text}"`);
+    if (o.font !== r.font) d.push(`font ${o.font} -> ${r.font}`);
+    if (o.fill !== r.fill) d.push(`fill ${o.fill} -> ${r.fill}`);
+    if (o.stroke !== r.stroke) d.push(`stroke ${o.stroke} -> ${r.stroke}`);
+    if (d.length) out.push(`~ ${r.name} (${r.id}): ${d.join('; ')}`);
+  }
+  for (const r of before) if (!B.has(r.id)) out.push(`- ${r.name} (${r.id})`);
+  return out;
+}
+// guideTable(): the artboard as a markdown table for figs/<figure>/GUIDE.md. Paste it after every
+// wave: a fresh context (after compaction, or tomorrow) resumes from ids and coordinates, not memory.
+function guideTable(art) {
+  const rows = snapshot(art).map(r => `| ${r.id} | ${r.name} | ${r.type} | ${r.x} | ${r.y} | ${r.w} | ${r.h} | ${r.text !== undefined ? '"' + r.text + '" ' + (r.font || '') : (r.fill || '')}${r.stroke ? ' / ' + r.stroke : ''} |`);
+  return [`## ${art.name} — ${art.width}×${art.height} pt (${art.id})`, '', '| id | name | type | x | y | w | h | text · font / fill / stroke |',
+          '| --- | --- | --- | ---: | ---: | ---: | ---: | --- |', ...rows].join('\n');
+}
+
 // Ink-to-edge padding of every text / symbol frame (use-*) inside a filled block of `root`.
 // A label whose ink reaches the block edge passes every overflow check and still reads as crammed.
 function padReport(root, minPad) {

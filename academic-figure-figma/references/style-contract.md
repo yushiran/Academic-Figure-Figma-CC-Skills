@@ -39,11 +39,14 @@ Distilled from measured studies of five flagship figures at this exact size — 
 No fill below **L\* 83**. No saturated fill, ever. One concept, one hue, held across every figure in the paper and across the results plots.
 
 ### Type
-- **6.0 pt regular sans for EVERY prose label.** One size. No exceptions. This is what removes the invented hierarchy. Frozen machinery uses the same 6.0 pt in `#929497`; only the colour changes.
-- **8.0 pt regular sans, black**, for the one or two words the figure is about — at most two instances. *(Contested: iMF sets these at 11 pt, above body size; BNF caps all in-art type below its 7.97 pt sub-caption. Resolved to 8.0 pt so nothing in the art outranks the 9 pt caption.)*
-- **Symbols are the paper's own maths**, placed as the typeset `sym-<key>` SVGs and scaled by x-height: **3.2 pt (≈9 pt Times)** for an ordinary symbol, **4.3 pt (≈12 pt)** for the one hero symbol. Never re-set a symbol in sans; never set a mechanism name in Times.
-- **Floor 6.0 pt, absolute.** Three of the five papers ship 4.5-5.6 pt somewhere; do not copy it.
+The two faces are fixed (2026-09-16, from the fonts embedded in MoCo, Mask R-CNN, MAE, MeanFlow, iMF, JiT, BNF and Drifting, read with PyMuPDF): **words in an Arial-class grotesque, symbols in Computer Modern, the body's own maths font.** MAE Fig. 1 is Arial 6.3 pt; MoCo Figs. 1–2 Arial 5.7–6.8 pt beside CMMI8 maths; iMF Fig. 3 Arial 6.1/7.8 pt beside CM 7.8 pt; JiT 5.7–8.1 pt; BNF Fig. 2 Arial 6.4–9.6 pt; Mask R-CNN Myriad 5.9–6.9 pt. No method figure sets its words in the body serif, and none sets a symbol in anything but CM. A CVPR body is Times text with CM maths (FlowDPS, our own build), so a figure symbol in STIX or Times is the mismatch a reader sees first.
+
+- **6.0 pt Arimo Regular for EVERY word in a figure** (Arimo has Arial's metrics and is in Figma's font list; Arial itself is not). One size. No exceptions. This is what removes the invented hierarchy. Frozen machinery uses the same 6.0 pt in `#929497`; only the colour changes.
+- **8.0 pt Arimo, black**, for the one or two words the figure is about — at most two instances. *(Contested: iMF sets these at 11 pt, above body size; BNF caps all in-art type below its 7.97 pt sub-caption. Resolved to 8.0 pt so nothing in the art outranks the 9 pt caption.)*
+- **Symbols are Computer Modern at 8 pt, placed at 1:1 and never rescaled.** `latex2svg.py` with fontset `cm` writes a viewBox in points and Figma imports one unit as one px, so the symbol on the artboard is exactly its font size (x-height 3.6 pt). **10 pt** for the one hero symbol (the controller's `u_ψ` inside its block). Tick numerals and fractions are maths too: `\genfrac{}{}{0.4}{1}{1}{2}` is the paper's `\tfrac12`, not a Unicode ½ in a text font. Never re-set a symbol in sans; never set a mechanism name in maths.
+- **Floor 6.0 pt, absolute.** Three of the five 2026 papers ship 4.5-5.6 pt somewhere; do not copy it.
 - No bold, no italic inside the artwork except real maths.
+- Plots follow the same two faces: `paper-data-figure/scripts/paper_plot_style.py` sets Arimo 6 pt and `mathtext.fontset = cm`, one size for labels, ticks and legends.
 
 ### Strokes
 - **0.5 pt is the working weight** and does every job: connectors, bundle rules, box outlines, ticks. *(Contested: measured working weights are 0.48, 0.48, 0.69, 0.72 pt; ARC and BNF each use literally one weight for an entire figure. Resolved to 0.5 pt.)*

@@ -39,11 +39,15 @@ is the slow path this skill replaces. Icons come from the local cache first
 5. **Logo semantics + eye check.** Base-model logos on the backbone block only; never
    a brand mark on the proposed-model block. Screenshot every fetched logo before use
    — CDNs mislabel (cache manifest records which marks are already verified).
-6. **Screenshot after every wave**, inside the same call and **at print scale**:
-   `await art.screenshot({scale: 8})`. `get_screenshot` never upscales, and a 1× render
-   of a 236 pt figure hides every collision and padding defect the reader will see
-   (cheatsheet §Core facts). Check: text overflow, single-headed arrows pointing with
-   the flow, whitespace balance, terminology.
+6. **Say what you expect, change it, then let the canvas say what changed** (the VISTA
+   loop, cheatsheet §Look, then say what changed). Before a mutating call, one line of
+   expected outcome in the `description`. Inside the call: `const before = snapshot(art)`
+   first, `diffLayout(before, snapshot(art))` in the return value, and
+   `await inspect(art, question, region?)` — a print-scale (8×) view of the artboard or
+   of one region, with the visual question it must answer. `get_screenshot` never
+   upscales, and a 1× render of a 236 pt figure hides every collision and padding defect
+   the reader will see (cheatsheet §Core facts). Check: text overflow, single-headed
+   arrows pointing with the flow, whitespace balance, terminology.
 7. **One element, one node; one figure, one style table.** Arrows are single
    vectorNetwork nodes (never line+polygon fragments). Same-kind elements are
    generated from one data table with STYLE tokens; end every session with
@@ -57,11 +61,13 @@ is the slow path this skill replaces. Icons come from the local cache first
    call**: text metrics are stale within the call that edited the text, so
    same-call packing and linting silently pass on real overlaps
    (cheatsheet §Text fitting, stale-metrics trap).
-8. **Formulas are typeset, not typed.** Any fraction, sum, radical or operator goes
-   through the latex2svg pipeline (cheatsheet §Formulas); `mathText()` only for
-   simple sub/superscripts in labels. Greek subscripts have no Unicode form, so
-   `v_\theta`, `u_\psi`, `g_\eta` are always typeset. User-made formula components
-   (e.g. Math-X) are reused via `findAll` + `createInstance`, never redrawn.
+8. **Two faces, fixed: words in Arimo 6 pt, symbols in Computer Modern 8 pt at 1:1.**
+   Every symbol — `x_t`, a fraction, a norm, a tick numeral — goes through
+   `latex2svg.py` (fontset `cm`, the body's maths font) and is placed with `symbol()`
+   or cloned from the `masters-cm` frame, never rescaled (cheatsheet §Formulas,
+   style-contract §Type: measured on MoCo, MAE, iMF, JiT, BNF). `mathText()` only for
+   plain sub/superscripts inside a prose label. User-made formula components are
+   reused via `findAll` + `createInstance`, never redrawn.
 9. **Show the method's own data, not named rectangles.** Where a quantity in the
    figure is an image, put the real one there: `use_figma` cannot create a bitmap,
    so the panels are frames whose fills arrive through the `upload_assets` MCP tool
@@ -80,6 +86,12 @@ is the slow path this skill replaces. Icons come from the local cache first
    §Reference colours): crop mode returns one component's fill/stroke/text trio,
    probe mode the exact colour at a point. Override the lib `PAL` with the
    measured hexes before drawing; same-role components share one measured colour.
+12. **The figure's memory lives on disk, not in the conversation.** After every wave
+   write `guideTable(art)` (lib) into `figs/<figure>/GUIDE.md` — ids, names, coordinates,
+   fonts, fills — together with the decisions taken (why a label sits where it sits,
+   what the user rejected), and save every render as `renders/<figure>_v<NN>.png`,
+   never overwriting. A compacted context, or tomorrow's session, resumes from that
+   file in one read instead of re-deriving the layout from the canvas.
 
 ## Workflow
 

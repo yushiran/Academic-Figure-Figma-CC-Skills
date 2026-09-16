@@ -2,10 +2,18 @@
 """Render a LaTeX math expression to an injectable SVG via matplotlib mathtext.
 
 No TeX installation needed. Glyphs become vector paths (svg.fonttype defaults
-to 'path'), so the result scales losslessly inside Figma. STIX fonts give a
-Times-compatible look matching Tinos body text.
+to 'path'), so the result scales losslessly inside Figma. The default fontset
+is 'cm' (Computer Modern), the maths font of a LaTeX paper body, so a symbol in
+the figure matches the same symbol in the text; 'stix' is the Times-like
+alternative for a paper whose maths is set in Times (mathptmx, newtxmath).
 
-Usage:  python3 latex2svg.py 'W_k = \\exp(-R_k)' out.svg [fontsize] [#colour]
+The viewBox is in points and Figma imports one unit as one px, so a symbol
+rendered at `fontsize` 8 lands on a print-size artboard at exactly 8 pt: place
+it with the lib's symbol() and never rescale it (cheatsheet §Formulas). The
+glyph group carries `transform="translate(x baseline)"`, which symbol() reads
+to align baselines.
+
+Usage:  python3 latex2svg.py 'W_k = \\exp(-R_k)' out.svg [fontsize] [#colour] [cm|stix]
 """
 import re
 import sys
@@ -16,9 +24,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # pylint: disable=wrong-import-position
 
 
-def render(latex, out_path, fontsize=10.0, colour="#212226"):
+def render(latex, out_path, fontsize=10.0, colour="#000000", fontset="cm"):
     """Write a tight, transparent SVG of `latex`; return cleaned SVG string."""
-    matplotlib.rcParams["mathtext.fontset"] = "stix"
+    matplotlib.rcParams["mathtext.fontset"] = fontset
     fig = plt.figure(figsize=(0.01, 0.01))
     fig.text(0, 0, f"${latex}$", fontsize=fontsize, color=colour)
     fig.savefig(out_path, format="svg", bbox_inches="tight",
@@ -34,10 +42,11 @@ def render(latex, out_path, fontsize=10.0, colour="#212226"):
 
 
 def main():
-    """CLI: latex2svg.py '<latex>' out.svg [fontsize] [#colour]."""
+    """CLI: latex2svg.py '<latex>' out.svg [fontsize] [#colour] [cm|stix]."""
     size = float(sys.argv[3]) if len(sys.argv) > 3 else 10.0
-    colour = sys.argv[4] if len(sys.argv) > 4 else "#212226"
-    svg = render(sys.argv[1], sys.argv[2], size, colour)
+    colour = sys.argv[4] if len(sys.argv) > 4 else "#000000"
+    fontset = sys.argv[5] if len(sys.argv) > 5 else "cm"
+    svg = render(sys.argv[1], sys.argv[2], size, colour, fontset)
     print(f"{sys.argv[2]}: {len(svg)} bytes")
 
 

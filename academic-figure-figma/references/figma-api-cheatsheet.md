@@ -33,18 +33,29 @@ Absolute x/y positioning inside plain frames is the whole layout model.
 
 ## Formulas (canvas-tested pipeline)
 
-Real math typesetting (fractions, sums, radicals) comes from LaTeX, not text nodes:
+Every symbol — `x_t`, `\hat{x}_1`, a fraction, a norm — is typeset, in the body's maths font,
+at the size it will print:
 
 ```bash
-uv run --with matplotlib python scripts/latex2svg.py 'W_k = \frac{\exp(-R_k)}{\sum_j \exp(-R_j)}' /tmp/eq.svg 10
+uv run --with matplotlib python scripts/latex2svg.py '\hat{x}_1' sym-x1hat.svg 8        # fontset cm, 8 pt, black
+uv run --with matplotlib python scripts/latex2svg.py '\genfrac{}{}{0.4}{1}{1}{2}' k12.svg 8   # = \tfrac12 (mathtext has no \tfrac)
 ```
 
-Read the SVG, inline it in the call, `figma.createNodeFromSvg(svg)`, `rescale` to
-target width (a display equation ≈ 60-70% of chip width; inline ≈ text cap-height).
-STIX fonts match Tinos body text; `<defs>+<use>` glyph structure imports cleanly.
-To reuse one formula many times: `createComponentFromNode` once, `createInstance`
-per placement. Reserve `mathText()` for plain sub/superscripts inside labels —
-never for fractions or operators.
+The viewBox is in points and Figma imports one unit as one px, so on a print-size artboard the
+node IS its font size: **never `rescale` a symbol.** Place it with `symbol(parent, svg, x, y,
+anchor, name, colour)` (lib): anchor `center` puts the ink centre at (x, y), `left`/`right` the
+ink edge, `baseline` the glyph baseline (read from the group's `translate(x baseline)`), so a row
+of labels shares one baseline. For more than three or four symbols do not inline SVG text in the
+call: render them to files, `upload_assets` with `count`, POST each as multipart (the filename
+becomes the layer name, the response's `placedOnNodeId` is the node), park the nodes in a
+`masters-cm` frame and `clone()` per use — cloning keeps every instance identical and a master
+is never moved out of a figure by accident. Recolour a clone by setting `fills` on every vector
+under it (the `patch_1` box has no fill and is skipped).
+
+matplotlib mathtext, not TeX: `\mathrm{diag}` not `\operatorname`, `\|` not `\lVert`, `\genfrac`
+with a numeric rule size (`0.4`; `0` draws no bar, `0.4pt` fails to parse) not `\tfrac`,
+`\varepsilon`, `\star`, `\circ`, `\top` all fine. Reserve `mathText()` for plain sub/superscripts
+inside prose labels — never for a symbol the paper sets in maths.
 
 ## Raster panels — real data inside the figure (canvas-tested)
 
@@ -178,6 +189,28 @@ uv run --with pillow python scripts/extract_palette.py probe ref.png 0.76,0.145 
   in one call, pack + lint in the next.
 - auditFigure's overflow/collision/textOverlap checks are the gate that
   proves it worked — run them only in a call that made no text edits.
+
+## Look, then say what changed (the VISTA loop)
+
+Borrowed from VISTA (Han, Hu, Qiu, Wu, He 2026), the harness that took a multimodal model to a
+perfect ARC-AGI-3 score with three habits: state what you expect to see before acting, state
+every visible change afterwards, and keep a lossless memory you can revisit instead of trusting
+recall. The lib gives each habit one call:
+
+- `await inspect(art, question, region?, scale?)` — a print-scale view (default 8×) of the
+  artboard, or of `{x, y, w, h}` in artboard pt, returned with the tool result; `question` is
+  what the view must answer and is echoed back so the transcript keeps it. A region view is cut
+  from a scaled clone inside a clipping frame that is removed before the call returns. Use it
+  where `get_screenshot` cannot: a 0.5 pt gap is 4 px at 8×.
+- `snapshot(art)` at the top of a mutating call, `diffLayout(before, snapshot(art))` in the
+  return: added / removed / moved / resized / re-fonted / recoloured nodes, listed by the canvas.
+  Write the expected change in the call's `description` first; the diff then confirms or
+  contradicts it, and a change you did not predict is the first thing to look at.
+- `guideTable(art)` — the artboard as a markdown table for `figs/<figure>/GUIDE.md`. Keep the
+  decisions under it. A `use_figma` context resets every call and the conversation is compacted
+  without warning; the GUIDE is the one place the layout survives.
+- Renders go to `renders/<figure>_v<NN>.png`, one per review, never overwritten: the user's
+  "that was better before" is answerable in one diff.
 
 ## Consistency discipline (the "细看全是问题" killer)
 
