@@ -46,6 +46,57 @@ To reuse one formula many times: `createComponentFromNode` once, `createInstance
 per placement. Reserve `mathText()` for plain sub/superscripts inside labels —
 never for fractions or operators.
 
+## Raster panels — real data inside the figure (canvas-tested)
+
+`figma.createImage*` is banned above and `createImageAsync` is refused by the MCP
+server, so **`use_figma` cannot put a bitmap on the canvas at all**. The only route is
+the separate `upload_assets` MCP tool, and it is worth taking: a method figure that
+shows what the method's own intermediate quantities actually look like reads far better
+than one that shows named rectangles. DAPS and DAVI both do exactly this.
+
+Order matters, because the target nodes must exist before the upload:
+
+1. In `use_figma`, create one frame per panel at its **final print size**, named
+   `img-<lane>-<quantity>`, and return the ids. A plain frame is enough; the upload
+   replaces its fill.
+2. Call `upload_assets` with `count: N`, `nodeIds: [...]` in the **same order** as the
+   files you are about to post, and `scaleMode` (`FILL` is right when source and frame
+   share an aspect ratio). It returns N single-use `submitUrl`s that expire in 10
+   minutes; at most 60 per call, 10 MB per asset.
+3. POST each file from the shell. Multipart is preferred, because the filename becomes
+   the layer name in Figma:
+
+```bash
+curl -s -X POST -F "file=@pipe_box_geta.png;type=image/png" "<submitUrl>"
+```
+
+**SVGs go through the same endpoint** with `image/svg+xml` and arrive as editable vector
+trees on the current page, ignoring `nodeIds` and `scaleMode`. Use that when a typeset
+formula would push the `code` string past its 50000-char limit; otherwise inlining it
+with `createNodeFromSvg` is simpler, because you keep the node id.
+
+**Cropping happens before the upload, never after.** Figma's crop handle is not in the
+allowed API subset, `FILL` centre-crops whatever does not fit with no way to nudge it,
+and `FIT` letterboxes into the frame's fill colour. Crop the source to the target
+frame's exact aspect ratio first; a square panel from a square source is the safe
+default.
+
+Two rules decide whether a scientific panel survives print:
+
+- **Render the panel natively; do not crop it out of a contact sheet or a built figure.**
+  A contact sheet already carries labels, padding and one resampling, so cropping it
+  gives away resolution and drags in stray ink. Re-run the source script for the one
+  quantity you need.
+- **Upsample before upload.** A panel printed at *P* pt needs about `4.2 × P` pixels to
+  reach 300 dpi, so a 34 pt panel wants roughly 145 px. Use LANCZOS for photographs and
+  smooth fields, **NEAREST for masks and any binary field**, so the edges stay crisp. A
+  mask-shaped operator diagonal is only legible while its square stays square.
+
+Normalise so a reader can compare across columns, and stay greyscale so the figure
+survives greyscale printing (figure-grammar rule 11): signed fields symmetric about
+mid-grey with the scale at the 99th percentile of the absolute value, non-negative
+fields from 0 as black to the maximum as white. State the convention in the caption.
+
 ## Core facts (each one is a real trap)
 
 | Fact | Detail |

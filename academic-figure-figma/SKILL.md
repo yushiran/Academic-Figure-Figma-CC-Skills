@@ -56,9 +56,16 @@ is the slow path this skill replaces. Icons come from the local cache first
    (cheatsheet §Text fitting, stale-metrics trap).
 8. **Formulas are typeset, not typed.** Any fraction, sum, radical or operator goes
    through the latex2svg pipeline (cheatsheet §Formulas); `mathText()` only for
-   simple sub/superscripts in labels. User-made formula components (e.g. Math-X)
-   are reused via `findAll` + `createInstance`, never redrawn.
-9. **Reference colours are measured, not guessed.** When a reference image exists,
+   simple sub/superscripts in labels. Greek subscripts have no Unicode form, so
+   `v_\theta`, `u_\psi`, `g_\eta` are always typeset. User-made formula components
+   (e.g. Math-X) are reused via `findAll` + `createInstance`, never redrawn.
+9. **Show the method's own data, not named rectangles.** Where a quantity in the
+   figure is an image, put the real one there: `use_figma` cannot create a bitmap,
+   so the panels are frames whose fills arrive through the `upload_assets` MCP tool
+   (cheatsheet §Raster panels). Render each panel natively from the source script,
+   crop to the frame's aspect before upload, and upsample to `4.2 × pt` pixels —
+   NEAREST for masks, LANCZOS for everything else.
+10. **Reference colours are measured, not guessed.** When a reference image exists,
    read component colours with `scripts/extract_palette.py` (cheatsheet
    §Reference colours): crop mode returns one component's fill/stroke/text trio,
    probe mode the exact colour at a point. Override the lib `PAL` with the
