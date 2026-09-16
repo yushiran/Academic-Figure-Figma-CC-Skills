@@ -103,6 +103,34 @@ Shadows, glows, bevels, 3D, texture. Gradients of any kind. Stretching to 236 pt
 2. **Duplicate one lane at an exact pitch and let hue carry the meaning** (BNF). Identical geometry, `#919191` for the given thing and `#000000` for ours; the difference is then the only thing visible.
 3. **One module, one label size, 60-84 % of the column** (JiT, ARC). Refusing the last 38 pt of the measure forces the content down to what genuinely fits at print size, and a single 6.0 pt label size removes every chance to invent a hierarchy the method does not have.
 
+### The same hue in the tables and the algorithm boxes
+
+Measured 2026-09-16 from the vector layer of fourteen flagship PDFs, not from memory, because the
+belief going in was that these papers colour their tables and they do not.
+
+- **MAE puts no colour in any table.** Its ablation tables mark the default setting with a neutral
+  `#E5E5E5` on **individual cells**, 32 × 9.9 pt, one number each, and the caption highlights the word
+  "gray" in that same grey so the convention explains itself. MAE has no algorithm box at all.
+- **Restormer is the only one of the fourteen that tints a table**, `#EFEFFF` at saturation 0.06, on
+  59 cells down the SSIM column. Swin, ViT and Mask2Former use bold and underline alone; their grey
+  rectangles are all inside figures.
+- **The only coloured pseudocode in the sample is DINO's**, and its comment teal `#408080` in a bold
+  monospace is the `listings` package default, syntax highlighting rather than a designed palette.
+- **CVPR permits colour and constrains it twice**: every point must survive a greyscale print, and
+  colour may never be the only discriminative feature, red-green deficiency being the common one.
+
+So the rule is: **bold for best and underline for second always stay, and shading is only ever a
+second signal.** Take the hue from the template rather than inventing one — `cvpr.sty` defines
+`cvprblue` at hue 208 and the figures already sit at hue 205, so one hue at three values covers the
+whole document: a tint at luminance 240 for our own rows, the saturated line colour for the one term
+in an algorithm box that the paper adds, and the figures' connector grey for a box's comments. Say in
+the caption what the shading means, as MAE does. Keep the ink budget visible: on the paper this was
+written for, 21 shaded rows and **fourteen characters** of blue in the entire document.
+
+`\usepackage{colortbl}` after `cvpr.sty` compiles clean; `xcolor` is already loaded, so loading it
+again with `[table]` would clash. A `\rowcolor` band leaves an `arydshln` dashed rule visible above it
+and does not cover a `\multirow` label.
+
 ### Two mechanics the contract assumes, learned the hard way
 
 - **Symbols are cloned, never moved.** Every typeset `sym-<key>` is one layer. Placing it in a
