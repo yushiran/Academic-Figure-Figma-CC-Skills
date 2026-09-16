@@ -34,18 +34,37 @@ Distilled from measured studies of five flagship figures at this exact size — 
 | `#E6E7E8` | 92 | frozen container fill |
 | `#D1D1D3` | 84 | block inside a frozen container; dashed-border colour |
 | `#EAEAEB` | 93 | a region that carries no gradient |
-| `#C7EAF5` | 91 | **THE claim tint** — at most two blocks, always the controller |
-| `#FAAF40` | 77 | accent: 4.0 pt discs, <= 3 of them |
-| `#2F9FEA` | 63 | loss arrows only, never a fill |
+| `#D6E6F2` | 90 | **THE claim tint** — at most two blocks, always the controller |
+| `#2E7EB8` | 51 | the same hue as the tint, saturated: loss arrows, never a fill |
+| `#E2822F` | 54 | the one accent hue: corrections, the last step, <= 3 marks |
 | `#E0EED4` / `#FCE9F2` | 93 / 94 | optional: an output/loss, or an arm the method deletes |
 
-No fill below **L\* 83**. No saturated fill, ever. One concept, one hue, held across every figure in the paper and across the results plots.
+No fill below **L\* 83**. No saturated fill, ever.
+
+**Two designed hues, and never a third.** Counted 2026-09-16 by pixel over the rendered figure
+region of twelve flagship single-column figures: coloured area is **0.3 to 4.7 %** of the frame and
+the number of designed hues is **one or two**. ResNet Fig. 2 is pure greyscale; MAE Fig. 1 runs a
+single salmon `#E97F6A` at 1.7 %; FlowDPS Fig. 2 a single burnt orange `#E96A2A` at 0.5 %; JiT
+Fig. 4 one blue `#157FAA` at 0.3 %; BNF Fig. 2 a light blue `#7FBFE9` at 0.6 %; MoCo and iMF a pale
+teal `#D4E9E9` fill with one accent beside it, 0.8 to 4.7 %. The two that measure twelve and
+thirteen hues, ARC Fig. 1 and JiT Fig. 1, are carrying **real colour data** — coloured puzzle grids,
+natural images — which never counts against the budget. Raster panels of photographs do not count
+either, and they will dominate any naive histogram, so read the hues off the drawn nodes, not the
+render.
+
+The structure that follows, and the one this contract now uses: **a pale tint and its own saturated
+line share one hue; one further accent hue carries the claim.** The failure it replaces is
+instructive — the tint sat at hue 194 and the loss line at 204, near enough to look like a mistake
+rather than a distinction, with a third hue at 36 on top; and the tint's saturation was 0.70 against
+MoCo's 0.32, which is exactly what makes a block read as plastic. **A tint above S 0.5 is too
+saturated.** One concept, one hue, held across every figure in the paper and across the results plots.
 
 ### Type
 The two faces are fixed (2026-09-16, from the fonts embedded in MoCo, Mask R-CNN, MAE, MeanFlow, iMF, JiT, BNF and Drifting, read with PyMuPDF): **words in an Arial-class grotesque, symbols in Computer Modern, the body's own maths font.** MAE Fig. 1 is Arial 6.3 pt; MoCo Figs. 1–2 Arial 5.7–6.8 pt beside CMMI8 maths; iMF Fig. 3 Arial 6.1/7.8 pt beside CM 7.8 pt; JiT 5.7–8.1 pt; BNF Fig. 2 Arial 6.4–9.6 pt; Mask R-CNN Myriad 5.9–6.9 pt. No method figure sets its words in the body serif, and none sets a symbol in anything but CM. A CVPR body is Times text with CM maths (FlowDPS, our own build), so a figure symbol in STIX or Times is the mismatch a reader sees first.
 
 - **6.5 pt Arimo Regular for EVERY word in a figure** (Arimo has Arial's metrics and is in Figma's font list; Arial itself is not). One size. No exceptions. This is what removes the invented hierarchy. Frozen machinery uses the same 6.5 pt in `#929497`; only the colour changes. *(6.5 is the median of the twenty-two label sizes measured across the eight papers above, which run 4.9 to 9.6 pt. The CVPR template asks for figure text "to match the font in the body text", i.e. 10 pt, and not one accepted paper does it — but 6.0, the first value used here, sat at the bottom of the band for no reason.)*
 - **8.0 pt Arimo, black**, for the one or two words the figure is about — at most two instances. *(Contested: iMF sets these at 11 pt, above body size; BNF caps all in-art type below its 7.97 pt sub-caption. Resolved to 8.0 pt so nothing in the art outranks the 9 pt caption.)*
+- **A fraction is not 8 pt just because you rendered it at 8 pt.** A text-style fraction sets its digits at **0.7 times** the render size, so `\genfrac` at 8 pt gives 5.6 pt digits, under the floor and visibly blurrier than the plain numerals beside them. Render tick fractions at **11.43 pt** with rule `0.6` and the digits come out at exactly 8 pt, matching an 8 pt integer, for 14.4 pt of height instead of 11.0. The same arithmetic applies to any sub- or superscript.
 - **Symbols are Computer Modern at 8 pt, placed at 1:1 and never rescaled.** `latex2svg.py` with fontset `cm` writes a viewBox in points and Figma imports one unit as one px, so the symbol on the artboard is exactly its font size (x-height 3.6 pt). **10 pt** for the one hero symbol (the controller's `u_ψ` inside its block). Tick numerals and fractions are maths too: `\genfrac{}{}{0.4}{1}{1}{2}` is the paper's `\tfrac12`, not a Unicode ½ in a text font. Never re-set a symbol in sans; never set a mechanism name in maths.
 - **Floor 6.0 pt, absolute.** Three of the five 2026 papers ship 4.5-5.6 pt somewhere; do not copy it.
 - No bold, no italic inside the artwork except real maths.
@@ -57,7 +76,7 @@ The two faces are fixed (2026-09-16, from the fonts embedded in MoCo, Mask R-CNN
 - **0.3 pt** hairline: raster-panel frames and a dashed no-gradient border (0.96 on / 0.72 off).
 - **Emphasis is colour, never weight**: `#000000` against `#6C6D70`, a filled head against an open one. A 60 pt container and a 3 pt circle carry the same stroke.
 - **One arrowhead silhouette.** Filled triangle, **2.8 x 2.8 pt** on a 0.5 pt shaft (5.6x the shaft), **4.2 x 4.2 pt** on a 0.9 pt shaft. Loss arrows take a shallower **4.5 x 2.8 pt** head. Open two-barb **2.8 x 2.4 pt** in `#B4B5B8` for frozen plumbing only.
-- Markers: **4.0 pt** filled disc for a knot; **6.0 pt** white-filled circle with a 0.5 pt stroke and 3.6 pt arms for a sum node; ellipsis = three **1.2 pt** discs at **3.0 pt** pitch, drawn on the line.
+- Markers: **4.0 pt** filled disc for a knot; **6.0 pt** white-filled circle with a 0.5 pt stroke and 3.6 pt arms for a sum node; ellipsis = three **2.2 pt** discs at **3.0 pt** pitch in `#6C6D70`. *(Was 1.2 pt in the plumbing grey `#B4B5B8`, which on an `#EAEAEB` region is invisible in print — a mark that means "and k more of these" has to survive both its own size and the fill it sits on, so it takes the connector grey, not the plumbing grey.)*
 
 ### Shape
 - **Rounded = a module** (r = 2 pt block, 4 pt container, 6 pt region). **Square = a tensor, an image, a panel** (r = 0). Radii are absolute points, never scaled to the shape.

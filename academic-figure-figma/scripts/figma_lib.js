@@ -9,13 +9,19 @@ const HEX = h => { const n = parseInt(h.replace('#',''), 16);
   return S(((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255); };
 
 // Low-saturation academic palette: [line, fill] per stage hue.
+// Measured 2026-09-16 off twelve flagship single-column figures: coloured area 0.3-4.7 % of the
+// frame, one or two designed hues, never three. A pale tint and its own saturated line share one
+// hue (claim); one further accent hue carries the correction. A tint above S 0.5 reads as plastic.
 const PAL = {
+  claim:  [HEX('#2E7EB8'), HEX('#D6E6F2')],   // hue 205/207: loss and other saturated lines, and THE claim tint
+  accent: [HEX('#E2822F'), HEX('#F7E6D6')],   // hue 22, the orange MAE and FlowDPS use; <= 3 marks per figure
+  grey:   [HEX('#6C6D70'), HEX('#EAEAEB')],   // connectors and a region that carries no gradient
+  // the old six-hue set, kept so an existing script still reads: never use more than two of these in one figure
   amber:  [HEX('#D98D0D'), HEX('#FEF6DE')],
   blue:   [HEX('#3373D9'), HEX('#E5F0FD')],
   orange: [HEX('#DE5C1A'), HEX('#FEF0E0')],
   green:  [HEX('#1A8C4D'), HEX('#E5F7EB')],
   purple: [HEX('#7340CC'), HEX('#F0EBFD')],
-  grey:   [HEX('#4D555F'), HEX('#F4F5F7')],
 };
 const INK = HEX('#212226'), MUT = HEX('#6B7280');
 
