@@ -114,7 +114,9 @@ def save(fig, path: str | Path) -> Path:
 # Every series must be separable three ways: hue, dash and marker. Hue alone fails in greyscale
 # and for the eight per cent of male reviewers with a colour deficiency.
 class _Palette:
-    HUES = ["#2B62BD", "#A8690A", "#2C7355", "#8C2F39", "#5B4B8A", "#3E454E"]
+    # The amber sits at hue 36, too near the accent ours() uses, so it moved to last.
+    # HUES = ["#2B62BD", "#A8690A", "#2C7355", "#8C2F39", "#5B4B8A", "#3E454E"]   # until 2026-09-16
+    HUES = ["#2B62BD", "#2C7355", "#8C2F39", "#5B4B8A", "#3E454E", "#A8690A"]
     DASHES = ["-", "--", "-.", ":", (0, (3, 1, 1, 1)), (0, (5, 1))]
     MARKERS = ["o", "s", "^", "D", "v", "P"]
 
@@ -132,9 +134,16 @@ class _Palette:
         d.update(kw)
         return d
 
+    ACCENT = "#E2822F"        # the figures' one accent hue; a plot line is heavy enough to carry it
+
     def ours(self, **kw) -> dict:
-        """The paper's own row. One weight heavier, never a different hue family."""
-        d = {"color": self.HUES[0], "linestyle": "-", "marker": "o", "linewidth": 1.8, "zorder": 5}
+        """Our own series: the accent hue at 1.8 pt, the same hue the figures give what we add.
+
+        The accent is 2.8:1 against white, under the 4.5 a small label needs, so it is used here
+        and never on text. In a table the same role is a pale tint on the row, not this hue.
+        """
+        # d = {"color": self.HUES[0], ...}   # until 2026-09-16: ours was the first baseline hue
+        d = {"color": self.ACCENT, "linestyle": "-", "marker": "o", "linewidth": 1.8, "zorder": 5}
         d.update(kw)
         return d
 

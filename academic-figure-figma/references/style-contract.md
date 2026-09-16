@@ -103,6 +103,28 @@ Shadows, glows, bevels, 3D, texture. Gradients of any kind. Stretching to 236 pt
 2. **Duplicate one lane at an exact pitch and let hue carry the meaning** (BNF). Identical geometry, `#919191` for the given thing and `#000000` for ours; the difference is then the only thing visible.
 3. **One module, one label size, 60-84 % of the column** (JiT, ARC). Refusing the last 38 pt of the measure forces the content down to what genuinely fits at print size, and a single 6.0 pt label size removes every chance to invent a hierarchy the method does not have.
 
+### A colour is a term: one concept, one hue, across every figure
+
+The terminology rule that a concept gets one word applies unchanged to colour, and it is easier to
+break because no one greps for it. On the paper this contract was written for, the accent marked the
+controller's correction legs in one figure and the last step in another, which agree, while a third
+figure left the same controller's output in the plumbing grey and a fourth painted its training
+target in the claim blue. One concept in three colours, and it survived four rounds of review by eye.
+
+Fix the meanings before spending the colour, and write them down:
+
+- **The accent is the quantity the paper adds.** Everywhere it appears, and nowhere else.
+- **The claim hue is the objective that produces it, and the rows where its evidence sits.**
+- **Everything frozen or given is grey**, including its type.
+
+**Contrast decides where a hue may go, and it is measurable.** Against white, the accent `#E2822F`
+is 2.8:1, the claim blue `#2E7EB8` is 4.4:1, the connector grey `#6C6D70` is 5.2:1 and black is 21:1.
+Text needs 4.5 and a line or marker needs 3.0, so **the accent can only ever be an area or a line with
+weight** — never a label, never a number in a table, never a symbol in an algorithm box. If the accent
+is carrying a 0.5 pt connector it is doing a job it cannot do; give it 1.2 pt or give it a filled
+shape. In a plot the same role is a 1.8 pt line with a marker, which clears the bar comfortably; in a
+table the role passes to a pale tint on the row instead.
+
 ### The same hue in the tables and the algorithm boxes
 
 Measured 2026-09-16 from the vector layer of fourteen flagship PDFs, not from memory, because the
