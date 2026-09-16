@@ -108,7 +108,16 @@ text run removes all fonts from the file and satisfies the rule trivially:
 - Figma **SVG export outlines text by default** (`svgOutlineText`), so `download_assets`
   with `defaultFormat: "svg"` then SVG→PDF is the source-safe route — it reads the frame,
   never mutates it. Convert with `pymupdf.open("f.svg").convert_to_pdf()`.
-- `TextNode.outlineText()` is **not exposed** in the MCP sandbox; don't plan around it.
+- `TextNode.outlineText()` is **not exposed** in the MCP sandbox, but **`figma.flatten([t])`
+  is**, and on a TEXT node it returns the glyph outlines. That gives the second route, the one
+  to use when the figure contains raster panels: clone the artboard off to the side,
+  `for (const t of clone.findAll(n => n.type === 'TEXT')) { await figma.loadFontAsync(t.fontName); figma.flatten([t]); }`,
+  then `download_assets` on the **clone** with `defaultFormat: "pdf"`, `defaultScale: 1`.
+  Measured on a 236 × 96 pt figure: page exactly 236 × 96 pt, `get_fonts()` empty, the five
+  raster panels preserved as embedded images. Figma re-encodes those fills as **JPEG**
+  (`DCTDecode`) whatever they were uploaded as, invisible at the ~1900 dpi a 640 px panel
+  lands at inside a 24 pt box, but lossy — never round-trip a figure through export to
+  re-import it.
 - Never outline in place. If a route needs mutation, duplicate to a scratch frame and
   delete it afterwards.
 - **Trade-off:** outlined text is no longer selectable, searchable or editable in the PDF.
