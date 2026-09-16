@@ -117,13 +117,30 @@ Fix the meanings before spending the colour, and write them down:
 - **The claim hue is the objective that produces it, and the rows where its evidence sits.**
 - **Everything frozen or given is grey**, including its type.
 
-**Contrast decides where a hue may go, and it is measurable.** Against white, the accent `#E2822F`
-is 2.8:1, the claim blue `#2E7EB8` is 4.4:1, the connector grey `#6C6D70` is 5.2:1 and black is 21:1.
-Text needs 4.5 and a line or marker needs 3.0, so **the accent can only ever be an area or a line with
-weight** — never a label, never a number in a table, never a symbol in an algorithm box. If the accent
-is carrying a 0.5 pt connector it is doing a job it cannot do; give it 1.2 pt or give it a filled
-shape. In a plot the same role is a 1.8 pt line with a marker, which clears the bar comfortably; in a
-table the role passes to a pale tint on the row instead.
+**Contrast decides which VALUE of a hue may do which job, and it is measurable.** Against white the
+accent `#E2822F` is 2.8:1, the claim blue `#2E7EB8` is 4.4:1, the connector grey `#6C6D70` is 5.2:1
+and black is 21:1. Text needs 4.5 and a line or marker needs 3.0. A hue that fails one of those is
+not banned from the job; it is the wrong **value** for it, and the fix is a darker sibling at the same
+hue, never a second hue.
+
+The flagship figures show exactly that discipline, each accent sitting just above the threshold for
+the job it does: MAE's salmon `#EA7D73` at 2.7 and BNF's light blue `#7FBFE9` at 2.0 are only ever
+fills; FlowDPS's burnt orange `#E96A2A` at 3.2 carries lines; JiT's blue `#157FAA` at 4.5 carries
+labels. So an accent hue needs **three values**, the way the claim hue already has three:
+
+| job | needs | this contract's accent |
+| --- | --- | --- |
+| a fill, a large area | no floor in practice | `#E2822F` 2.8:1 |
+| a stroke, a small marker | 3.0 | `#CC752A` 3.4:1 |
+| a symbol, a label | 4.5 | `#A65F22` 4.9:1 |
+
+An accent carrying a 0.5 pt connector is doing a job it cannot do: give it 1.2 pt, a darker value, or
+a filled shape. In a plot the role is a 1.8 pt line with a marker; in a table it passes to a pale tint
+on the row instead, because a tint is an area.
+
+**The module and what the module produces are different objects.** The pale claim tint marks the block
+the paper adds; the accent marks the quantity it produces. Keep them apart or the accent becomes the
+largest coloured area in the figure and the budget goes with it.
 
 ### The same hue in the tables and the algorithm boxes
 
