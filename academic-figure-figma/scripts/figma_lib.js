@@ -108,6 +108,37 @@ async function selfLoop(parent, x, y, w, rise, colour) {
   return curveArrow(parent, x + w, y, x, y, (rise || 12), colour, true);
 }
 
+// Re-geometry an existing arrow without touching its stroke, colour or head kind:
+// pts[0] is the tail, pts[last] the head. `resize` on an arrow stretches the head — never use it.
+async function reroute(v, pts) {
+  const old = v.vectorNetwork, cap = old.vertices[old.vertices.length - 1].strokeCap || 'NONE';
+  const minx = Math.min(...pts.map(p => p[0])), miny = Math.min(...pts.map(p => p[1]));
+  await v.setVectorNetworkAsync({
+    vertices: pts.map((q, i) => ({ x: q[0] - minx, y: q[1] - miny, strokeCap: i === pts.length - 1 ? cap : 'NONE' })),
+    segments: pts.slice(1).map((_, i) => ({ start: i, end: i + 1 })), regions: [] });
+  v.x = minx; v.y = miny; return v;
+}
+
+// Ink-to-edge padding of every text / symbol frame (use-*) inside a filled block of `root`.
+// A label whose ink reaches the block edge passes every overflow check and still reads as crammed.
+function padReport(root, minPad) {
+  const box = n => { const b = n.absoluteRenderBounds || n.absoluteBoundingBox; return { x: b.x, y: b.y, w: b.width, h: b.height }; };
+  const inside = (a, b) => b.x >= a.x - 0.3 && b.y >= a.y - 0.3 && b.x + b.w <= a.x + a.w + 0.3 && b.y + b.h <= a.y + a.h + 0.3;
+  const blocks = root.children.filter(n => n.type === 'FRAME' && Array.isArray(n.fills) && n.fills.length &&
+    n.fills[0].type === 'SOLID' && n.fills[0].visible !== false && !/^use-/.test(n.name));
+  const out = [];
+  for (const n of root.children) if (n.type === 'TEXT' || (/^use-/.test(n.name) && n.children && n.children.length)) {
+    const ink = box(n.type === 'TEXT' ? n : n.children[0]);
+    for (const b of blocks) {
+      const r = box(b); if (!inside(r, ink)) continue;
+      const pad = [ink.x - r.x, r.x + r.w - ink.x - ink.w, ink.y - r.y, r.y + r.h - ink.y - ink.h];
+      if (Math.min(...pad) < (minPad === undefined ? 2 : minPad))
+        out.push(n.name + ' in ' + b.name + ': L' + pad[0].toFixed(1) + ' R' + pad[1].toFixed(1) + ' T' + pad[2].toFixed(1) + ' B' + pad[3].toFixed(1));
+    }
+  }
+  return out;
+}
+
 // Consistency audit: distinct style values across a subtree. Run before declaring
 // done; more than the expected count of any list = style drift to fix.
 function auditConsistency(root) {

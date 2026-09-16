@@ -39,8 +39,11 @@ is the slow path this skill replaces. Icons come from the local cache first
 5. **Logo semantics + eye check.** Base-model logos on the backbone block only; never
    a brand mark on the proposed-model block. Screenshot every fetched logo before use
    — CDNs mislabel (cache manifest records which marks are already verified).
-6. **Screenshot after every wave**, inside the same call. Check: text overflow,
-   single-headed arrows pointing with the flow, whitespace balance, terminology.
+6. **Screenshot after every wave**, inside the same call and **at print scale**:
+   `await art.screenshot({scale: 8})`. `get_screenshot` never upscales, and a 1× render
+   of a 236 pt figure hides every collision and padding defect the reader will see
+   (cheatsheet §Core facts). Check: text overflow, single-headed arrows pointing with
+   the flow, whitespace balance, terminology.
 7. **One element, one node; one figure, one style table.** Arrows are single
    vectorNetwork nodes (never line+polygon fragments). Same-kind elements are
    generated from one data table with STYLE tokens; end every session with
