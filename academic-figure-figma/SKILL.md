@@ -65,7 +65,14 @@ is the slow path this skill replaces. Icons come from the local cache first
    (cheatsheet §Raster panels). Render each panel natively from the source script,
    crop to the frame's aspect before upload, and upsample to `4.2 × pt` pixels —
    NEAREST for masks, LANCZOS for everything else.
-10. **Reference colours are measured, not guessed.** When a reference image exists,
+10. **Draw to the measured contract, and clone every symbol.** `references/style-contract.md`
+   holds the numbers accepted figures actually use: one 6 pt prose size, stroke weights
+   0.3 / 0.5 / 0.9 and nothing between, no stroke on a fill that sits on white, ink inside
+   [19, 217] of a 236 pt frame, at most two tinted blocks. A typeset `sym-<key>` is a single
+   layer, so park the uploads once in a `masters-typeset` frame and place `master.clone()`
+   every time — `appendChild` on the master moves it, which silently strips the label from
+   whichever figure held it before.
+11. **Reference colours are measured, not guessed.** When a reference image exists,
    read component colours with `scripts/extract_palette.py` (cheatsheet
    §Reference colours): crop mode returns one component's fill/stroke/text trio,
    probe mode the exact colour at a point. Override the lib `PAL` with the
@@ -113,6 +120,7 @@ font-compliance check (references/build-workflow.md §Venue font compliance) bef
 | references/paper-canvas-specs.md | at Step 0 (canvas + fonts + palette numbers) |
 | references/figure-grammar.md | at Step 0 planning and Step 4 review |
 | references/figure-styles.md | picking or switching a figure's style/palette: named presets, construction rules, sampler-board + hex-map workflow |
+| references/style-contract.md | at Step 0 for the numbers (palette, type, strokes, spacing, banned tells) and at Step 4 as the checklist; measured from five He Kaiming figures and three flagship inverse-problem papers |
 | references/icon-sourcing.md | only when an icon is NOT in the local cache |
 | references/figma-mcp-setup.md | connection/quota problems only |
 | references/build-workflow.md | deep dives: balancing math, pitfalls, export + venue font compliance |
