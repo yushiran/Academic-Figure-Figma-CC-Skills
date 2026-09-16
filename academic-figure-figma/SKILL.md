@@ -28,18 +28,32 @@ is the slow path this skill replaces. Icons come from the local cache first
    drawing. Fix the reference image's errors, never reproduce them. Terminology must
    match the paper canon verbatim; when the paper is inconsistent, ask the user to
    pick. Never hard-code section numbers into a figure.
-2. **Basic building blocks only.** Frame, Text, Line, Polygon, SVG import, absolute
+   **This binds the notation too.** Grep the live source for every symbol before drawing
+   it: the paper that writes `x^\ast` 31 times and `x^\star` never must not get a star in
+   its figure, and a symbol the paper never uses (`x_1` where it always writes `\hat x_1`
+   or `\hat x`) is an error even though it looks right. An algorithm's local name is fair
+   game when the prose symbol will not fit — label the panel `d` and gloss
+   `d=\operatorname{diag}(A^\top A)` in the caption — but only if the paper itself uses `d`.
+2. **Measure the render, never the node tree.** Gutters, ink coverage and font size are
+   properties of pixels, and every taste argument is settled by
+   `uv run --with pymupdf --with pillow --with numpy python scripts/measure_figure.py <fig.pdf>`,
+   which also measures a reference paper's figure with `--figure N`. A number read off a
+   caption's text block, a node's bounding box or a 1x screenshot is not a measurement:
+   one such reading put a 19 pt gutter into the style contract and left four figures
+   visibly inset until the user caught it by eye. Run it on every figure before handing
+   it over, and on two reference figures whenever a new rule is being set.
+3. **Basic building blocks only.** Frame, Text, Line, Polygon, SVG import, absolute
    x/y, plus the component-reuse subset (createComponentFromNode / createInstance).
    Auto Layout, variant sets, Variables, Styles are banned (cheatsheet §Allowed).
-3. **Design at final print size** (references/paper-canvas-specs.md). Never draw big
+4. **Design at final print size** (references/paper-canvas-specs.md). Never draw big
    and shrink — fonts fall below the 6pt floor.
-4. **Figure grammar** (references/figure-grammar.md): evidence for every arrow, no
+5. **Figure grammar** (references/figure-grammar.md): evidence for every arrow, no
    false relays, variables on edges not boxes, operation chains not just outcomes,
    repeated entities compressed, mainline centred, restrained palette.
-5. **Logo semantics + eye check.** Base-model logos on the backbone block only; never
+6. **Logo semantics + eye check.** Base-model logos on the backbone block only; never
    a brand mark on the proposed-model block. Screenshot every fetched logo before use
    — CDNs mislabel (cache manifest records which marks are already verified).
-6. **Say what you expect, change it, then let the canvas say what changed** (the VISTA
+7. **Say what you expect, change it, then let the canvas say what changed** (the VISTA
    loop, cheatsheet §Look, then say what changed). Before a mutating call, one line of
    expected outcome in the `description`. Inside the call: `const before = snapshot(art)`
    first, `diffLayout(before, snapshot(art))` in the return value, and
@@ -48,7 +62,7 @@ is the slow path this skill replaces. Icons come from the local cache first
    upscales, and a 1× render of a 236 pt figure hides every collision and padding defect
    the reader will see (cheatsheet §Core facts). Check: text overflow, single-headed
    arrows pointing with the flow, whitespace balance, terminology.
-7. **One element, one node; one figure, one style table.** Arrows are single
+8. **One element, one node; one figure, one style table.** Arrows are single
    vectorNetwork nodes (never line+polygon fragments). Same-kind elements are
    generated from one data table with STYLE tokens; end every session with
    `auditFigure()` — structured lint for font floor, ink overflow, block
@@ -61,32 +75,33 @@ is the slow path this skill replaces. Icons come from the local cache first
    call**: text metrics are stale within the call that edited the text, so
    same-call packing and linting silently pass on real overlaps
    (cheatsheet §Text fitting, stale-metrics trap).
-8. **Two faces, fixed: words in Arimo 6 pt, symbols in Computer Modern 8 pt at 1:1.**
+9. **Two faces, fixed: words in Arimo 6.5 pt, symbols in Computer Modern 8 pt at 1:1.**
    Every symbol — `x_t`, a fraction, a norm, a tick numeral — goes through
    `latex2svg.py` (fontset `cm`, the body's maths font) and is placed with `symbol()`
    or cloned from the `masters-cm` frame, never rescaled (cheatsheet §Formulas,
    style-contract §Type: measured on MoCo, MAE, iMF, JiT, BNF). `mathText()` only for
    plain sub/superscripts inside a prose label. User-made formula components are
    reused via `findAll` + `createInstance`, never redrawn.
-9. **Show the method's own data, not named rectangles.** Where a quantity in the
+10. **Show the method's own data, not named rectangles.** Where a quantity in the
    figure is an image, put the real one there: `use_figma` cannot create a bitmap,
    so the panels are frames whose fills arrive through the `upload_assets` MCP tool
    (cheatsheet §Raster panels). Render each panel natively from the source script,
    crop to the frame's aspect before upload, and upsample to `4.2 × pt` pixels —
    NEAREST for masks, LANCZOS for everything else.
-10. **Draw to the measured contract, and clone every symbol.** `references/style-contract.md`
-   holds the numbers accepted figures actually use: one 6 pt prose size, stroke weights
-   0.3 / 0.5 / 0.9 and nothing between, no stroke on a fill that sits on white, ink inside
-   [19, 217] of a 236 pt frame, at most two tinted blocks. A typeset `sym-<key>` is a single
+11. **Draw to the measured contract, and clone every symbol.** `references/style-contract.md`
+   holds the numbers accepted figures actually use: one 6.5 pt prose size, stroke weights
+   0.3 / 0.5 / 0.9 and nothing between, no stroke on a fill that sits on white, ink spanning
+   the 236 pt frame with gutters of at most 10 pt, coverage 20-40 %, at most two tinted
+   blocks. A typeset `sym-<key>` is a single
    layer, so park the uploads once in a `masters-typeset` frame and place `master.clone()`
    every time — `appendChild` on the master moves it, which silently strips the label from
    whichever figure held it before.
-11. **Reference colours are measured, not guessed.** When a reference image exists,
+12. **Reference colours are measured, not guessed.** When a reference image exists,
    read component colours with `scripts/extract_palette.py` (cheatsheet
    §Reference colours): crop mode returns one component's fill/stroke/text trio,
    probe mode the exact colour at a point. Override the lib `PAL` with the
    measured hexes before drawing; same-role components share one measured colour.
-12. **The figure's memory lives on disk, not in the conversation.** After every wave
+13. **The figure's memory lives on disk, not in the conversation.** After every wave
    write `guideTable(art)` (lib) into `figs/<figure>/GUIDE.md` — ids, names, coordinates,
    fonts, fills — together with the decisions taken (why a label sits where it sits,
    what the user rejected), and save every render as `renders/<figure>_v<NN>.png`,
@@ -103,7 +118,7 @@ returns here when drawing-ready.
 **Step 0 — Preflight.** `whoami` (quota-exempt) → seat must be Full with a paid or
 education plan, else run the setup tutorial first (references/figma-mcp-setup.md). Pick canvas width
 from the venue (references/paper-canvas-specs.md). Produce the Step-0 correctness
-audit table (rule 1) and the figure-grammar plan (rule 4). Read
+audit table (rule 1) and the figure-grammar plan (rule 5). Read
 `scripts/figma_lib.js` and the icon cache manifest now — every later call pastes the
 lib verbatim at the top of its code.
 
@@ -121,7 +136,7 @@ Keep the returned arrow ids for later adjustments — never re-find arrows by ty
 
 **Step 4 — Review loop.** Screenshot at 2.5-3x AND re-read the reference image
 side-by-side (structure being right is not enough — compare density, spacing,
-line routing against the original). Run rule 6, `auditConsistency()`, plus the
+line routing against the original). Run rule 7, `auditConsistency()`, plus the
 error vocabulary at the end of references/figure-grammar.md. Independent fixes may fan out again.
 Stop when clean; ask the user to review in Figma at 100% zoom; user exports PDF — run the
 font-compliance check (references/build-workflow.md §Venue font compliance) before handing it over.

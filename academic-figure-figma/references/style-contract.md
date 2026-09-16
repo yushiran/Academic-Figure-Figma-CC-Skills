@@ -6,16 +6,19 @@ RAM and DAVI, and the numbers below are what the accepted figures actually do. F
 spec, not as inspiration: every rule is a hex, a point size or a count.
 
 Load this at Step 0 alongside figure-grammar.md, and run its checks at Step 4: one prose size,
-three stroke weights, no stroked fill on white, ink inside [19, 217] of a 236 pt frame, at most
-two tinted blocks, at most three accent marks.
+three stroke weights, no stroked fill on white, at most two tinted blocks, at most three accent
+marks, and the two numbers that come from the render rather than the node tree, **gutters and ink
+coverage**, both reported by `scripts/measure_figure.py`.
 
 ## The 236 pt method-figure contract
 
 Distilled from measured studies of five flagship figures at this exact size — *Generative Modeling via Drifting* (Figs 1-3), *Improved Mean Flows* (Figs 1, 2, 5), *Back to Basics / JiT* (Figs 1, 3, CVPR 2026), *Bidirectional Normalizing Flow* (Figs 1, 3, 4, CVPR 2026 spotlight), *ARC Is a Vision Problem!* (Figs 1, 3, 5, CVPR 2026). Every number below was read off a 300 dpi page render or the PDF's own drawing operators, not estimated. Where the five disagreed, the resolution is stated inline.
 
 ### Frame and budget
-- Frame **236 pt** wide. **Ink spans x = 19 to x = 217 (198 pt).** Never stretch to the measure. *(Contested: measured ink runs 60-98 % of the column across nine figures; resolved to ARC's single-column method figure, 198.7 pt ink with 19.0 / 18.5 pt gutters, which is the closest analogue and the median.)*
-- Height is whatever the content needs: **88-104 pt for a band**, up to 175 pt only for a true vertical architecture.
+- Frame **236 pt** wide, and **the ink spans it: gutters of at most 10 pt on each side.** *(Corrected 2026-09-16. The earlier rule here, "ink spans x = 19 to 217", was measured wrong: it came from ARC's caption text block, which is simply the column width and says nothing about where the artwork's ink begins. Measuring the rendered pixels instead, the gutters of the flagship single-column method figures are JiT Fig. 4 0.2/0.0, iMF Fig. 1 0.0/9.3, iMF Fig. 3 4.3/4.0, FlowDPS Fig. 2 6.3/3.5, ARC Fig. 1 3.2/8.8, BNF Fig. 2 5.3/8.8 — never more than 9.3 pt. Four figures were drawn to the wrong rule, sat 20-24 pt inside the column on each side, and the user spotted it by eye immediately: "左右两边还有空白".)*
+- **Ink coverage 20-40 %** of the frame, measured as the fraction of pixels below 245 luminance in an 8x render. The flagship range is 8.3 % (BNF Fig. 2) to 36.9 % (ARC Fig. 1), with FlowDPS Fig. 2 at 12.9, JiT Fig. 4 at 19.9 and iMF Fig. 1 at 23.6. **Under about 15 % a figure reads as empty** whatever its aspect, and the fix is never a bigger frame: it is bigger elements in the same frame.
+- When both rules bind, **grow the elements, not the gaps** — panels, blocks and the axis span. Re-spacing a chain to the full measure while leaving the panels at their old size just moves the whitespace inward.
+- Height is whatever the content needs: **88-110 pt for a band**, up to 175 pt only for a true vertical architecture. Aspect 1.4-2.5; the flagship single-column method figures run 1.08-1.49 and a band figure may be flatter.
 - **Paper >= 50 %** of the frame. **Hard black ink <= 3 %. Saturated accent <= 2 %.**
 - **9.0 pt** from the lowest ink to the caption. The caption is the only place a **bold** word exists.
 
@@ -41,7 +44,7 @@ No fill below **L\* 83**. No saturated fill, ever. One concept, one hue, held ac
 ### Type
 The two faces are fixed (2026-09-16, from the fonts embedded in MoCo, Mask R-CNN, MAE, MeanFlow, iMF, JiT, BNF and Drifting, read with PyMuPDF): **words in an Arial-class grotesque, symbols in Computer Modern, the body's own maths font.** MAE Fig. 1 is Arial 6.3 pt; MoCo Figs. 1–2 Arial 5.7–6.8 pt beside CMMI8 maths; iMF Fig. 3 Arial 6.1/7.8 pt beside CM 7.8 pt; JiT 5.7–8.1 pt; BNF Fig. 2 Arial 6.4–9.6 pt; Mask R-CNN Myriad 5.9–6.9 pt. No method figure sets its words in the body serif, and none sets a symbol in anything but CM. A CVPR body is Times text with CM maths (FlowDPS, our own build), so a figure symbol in STIX or Times is the mismatch a reader sees first.
 
-- **6.0 pt Arimo Regular for EVERY word in a figure** (Arimo has Arial's metrics and is in Figma's font list; Arial itself is not). One size. No exceptions. This is what removes the invented hierarchy. Frozen machinery uses the same 6.0 pt in `#929497`; only the colour changes.
+- **6.5 pt Arimo Regular for EVERY word in a figure** (Arimo has Arial's metrics and is in Figma's font list; Arial itself is not). One size. No exceptions. This is what removes the invented hierarchy. Frozen machinery uses the same 6.5 pt in `#929497`; only the colour changes. *(6.5 is the median of the twenty-two label sizes measured across the eight papers above, which run 4.9 to 9.6 pt. The CVPR template asks for figure text "to match the font in the body text", i.e. 10 pt, and not one accepted paper does it — but 6.0, the first value used here, sat at the bottom of the band for no reason.)*
 - **8.0 pt Arimo, black**, for the one or two words the figure is about — at most two instances. *(Contested: iMF sets these at 11 pt, above body size; BNF caps all in-art type below its 7.97 pt sub-caption. Resolved to 8.0 pt so nothing in the art outranks the 9 pt caption.)*
 - **Symbols are Computer Modern at 8 pt, placed at 1:1 and never rescaled.** `latex2svg.py` with fontset `cm` writes a viewBox in points and Figma imports one unit as one px, so the symbol on the artboard is exactly its font size (x-height 3.6 pt). **10 pt** for the one hero symbol (the controller's `u_ψ` inside its block). Tick numerals and fractions are maths too: `\genfrac{}{}{0.4}{1}{1}{2}` is the paper's `\tfrac12`, not a Unicode ½ in a text font. Never re-set a symbol in sans; never set a mechanism name in maths.
 - **Floor 6.0 pt, absolute.** Three of the five 2026 papers ship 4.5-5.6 pt somewhere; do not copy it.
