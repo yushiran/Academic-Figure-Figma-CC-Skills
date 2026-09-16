@@ -38,7 +38,7 @@ at the size it will print:
 
 ```bash
 uv run --with matplotlib python scripts/latex2svg.py '\hat{x}_1' sym-x1hat.svg 8        # fontset cm, 8 pt, black
-uv run --with matplotlib python scripts/latex2svg.py '\genfrac{}{}{0.4}{1}{1}{2}' k12.svg 8   # = \tfrac12 (mathtext has no \tfrac)
+uv run --with matplotlib python scripts/latex2svg.py '\genfrac{}{}{4.0}{1}{1}{2}' k12.svg 11.43   # = \tfrac12, digits 8 pt, bar 0.46 pt
 ```
 
 The viewBox is in points and Figma imports one unit as one px, so on a print-size artboard the
@@ -52,8 +52,18 @@ becomes the layer name, the response's `placedOnNodeId` is the node), park the n
 is never moved out of a figure by accident. Recolour a clone by setting `fills` on every vector
 under it (the `patch_1` box has no fill and is skipped).
 
+**`upload_assets` paints an SVG's `<defs>`.** matplotlib emits each glyph once in `<defs>` and
+references it with `<use>`; that importer draws both, so every symbol arrives with a stray copy of
+each glyph and a box about 0.7 pt too tall. Expand each `<use href="#g" transform="T"/>` into
+`<path d="…" transform="T scale(s)"/>` with the definition's own `d` and `scale`, then delete the
+glyph `<defs>` — it rasterises pixel-identical and imports clean. `createNodeFromSvg` handles the
+references correctly, so this bites only the upload route. A second trap in the same place: a
+flattened vector's reported `width`/`height` follow the curve **control points**, so they overshoot
+the ink by a few tenths of a point. Only the exported PDF settles a question about size.
+
 matplotlib mathtext, not TeX: `\mathrm{diag}` not `\operatorname`, `\|` not `\lVert`, `\genfrac`
-with a numeric rule size (`0.4`; `0` draws no bar, `0.4pt` fails to parse) not `\tfrac`,
+with a numeric rule size in **hundredths of the font size** (`4.0` at 11.43 pt is a 0.46 pt bar;
+`0` draws no bar, `0.4pt` fails to parse) not `\tfrac`,
 `\varepsilon`, `\star`, `\circ`, `\top` all fine. Reserve `mathText()` for plain sub/superscripts
 inside prose labels — never for a symbol the paper sets in maths.
 
