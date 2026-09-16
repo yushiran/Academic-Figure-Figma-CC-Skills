@@ -1,4 +1,4 @@
-"""Shared matplotlib style for paper figures. Import it; never copy its numbers into a figure script.
+"""Shared matplotlib style for paper figures. Import it; never copy its numbers into a script.
 
 The one idea behind this file: a figure is drawn at the size it will be printed at, and
 `\\includegraphics` never scales it. Scaling is what silently turns an 8 pt label into a 5 pt one,
@@ -12,7 +12,6 @@ and it is invisible in the PDF you look at before submission.
 """
 from __future__ import annotations
 
-import math
 from pathlib import Path
 
 import matplotlib
@@ -45,8 +44,10 @@ FULL, COL = VENUES[VENUE]
 BASE = 6.0
 FLOOR = 6.0
 
-# SERIF = ["Times New Roman", "Nimbus Roman", "Tinos", "Liberation Serif", "DejaVu Serif"]   # until 2026-09-16: serif + STIX
-SANS = ["Arimo", "Arial", "Liberation Sans", "Helvetica", "Nimbus Sans", "DejaVu Sans"]      # Arimo = Arial metrics (Google Fonts)
+# until 2026-09-16 the figures were serif + STIX:
+# SERIF = ["Times New Roman", "Nimbus Roman", "Tinos", "Liberation Serif", "DejaVu Serif"]
+# Arimo carries Arial's metrics and is on Google Fonts.
+SANS = ["Arimo", "Arial", "Liberation Sans", "Helvetica", "Nimbus Sans", "DejaVu Sans"]
 
 
 def use_style(base: float = BASE) -> None:
@@ -57,14 +58,16 @@ def use_style(base: float = BASE) -> None:
         # "mathtext.fontset": "stix",          # matches Times body text
         "font.family": "sans-serif",
         "font.sans-serif": SANS,
-        "mathtext.fontset": "cm",            # Computer Modern: the maths font of a LaTeX body, so $x_t$ matches the text
+        # Computer Modern is the maths font of a LaTeX body, so $x_t$ matches the text.
+        "mathtext.fontset": "cm",
         "font.size": base,
         "axes.labelsize": base,
         "axes.titlesize": base,              # titles are off by policy; size set for safety
         # "xtick.labelsize": base - 1,
         # "ytick.labelsize": base - 1,
         # "legend.fontsize": base - 1,
-        "xtick.labelsize": base,             # one size: a second prose size is the hierarchy the figure does not have
+        # One size: a second prose size is a hierarchy the figure does not have.
+        "xtick.labelsize": base,
         "ytick.labelsize": base,
         "legend.fontsize": base,
         "axes.linewidth": 0.6,
@@ -116,13 +119,15 @@ class _Palette:
     MARKERS = ["o", "s", "^", "D", "v", "P"]
 
     def line(self, i: int, **kw) -> dict:
+        """Series i as a line: hue, dash and marker together, so greyscale still separates it."""
         d = {"color": self.HUES[i % len(self.HUES)],
              "linestyle": self.DASHES[i % len(self.DASHES)],
              "marker": self.MARKERS[i % len(self.MARKERS)]}
         d.update(kw)
         return d
 
-    def bar(self, i: int, **kw) -> dict:
+    def bar(self, i: int, **kw) -> dict:   # pylint: disable=disallowed-name  # a bar chart, not a placeholder
+        """Series i as a bar: the same hue, with a dark edge so adjacent bars stay separate."""
         d = {"color": self.HUES[i % len(self.HUES)], "edgecolor": "#17191D", "linewidth": 0.5}
         d.update(kw)
         return d
@@ -138,23 +143,24 @@ PALETTE = _Palette()
 
 
 def audit(path: str | Path, floor: float = FLOOR) -> list[str]:
-    """Static checks a read-back cannot make: font floor and page fit. Run before declaring done."""
-    import pypdf
+    """Static checks a read-back cannot make: page fit, and type that is still text."""
+    # Imported here so that importing this module needs only matplotlib.
+    import pypdf  # pylint: disable=import-outside-toplevel
 
+    del floor      # a /Font resource names the font but not its size, so the floor needs the stream
     path = Path(path)
     findings = []
     r = pypdf.PdfReader(str(path))
-    box = r.pages[0].mediabox
-    w_in, h_in = float(box.width) / 72.0, float(box.height) / 72.0
+    # .pages is a _VirtualList whose item type pylint cannot infer, hence the two disables.
+    box = r.pages[0].mediabox                              # pylint: disable=no-member
+    w_in = float(box.width) / 72.0
     if w_in > FULL + 0.02:
         findings.append(f"{path.name}: {w_in:.3f} in wide, past the {FULL} in text width")
-    for page in r.pages:
-        for name, font in (page.get("/Resources", {}).get("/Font", {}) or {}).items():
-            pass                                   # font sizes live in the content stream
-    txt = r.pages[0].extract_text() or ""
+    txt = r.pages[0].extract_text() or ""                  # pylint: disable=no-member
     if not txt.strip():
         findings.append(f"{path.name}: no extractable text, so the type was rasterised")
     return findings
 
 
-__all__ = ["use_style", "figure", "save", "audit", "PALETTE", "COL", "FULL", "BASE", "FLOOR", "VENUES"]
+__all__ = ["use_style", "figure", "save", "audit", "PALETTE",
+           "COL", "FULL", "BASE", "FLOOR", "VENUES"]

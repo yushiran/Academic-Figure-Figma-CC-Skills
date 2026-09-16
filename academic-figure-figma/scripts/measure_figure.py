@@ -3,7 +3,7 @@
 
     uv run --with pymupdf --with pillow --with numpy python scripts/measure_figure.py fig/fig2.pdf
     uv run ... measure_figure.py paper.pdf --figure 2          # a reference paper's Figure 2
-    uv run ... measure_figure.py render.png --width 236        # a PNG render of a known column width
+    uv run ... measure_figure.py render.png --width 236   # a PNG render of a known column width
 
 Reports, in points of the target column:
 
@@ -24,10 +24,12 @@ import argparse
 import re
 import sys
 
+# Each reader is imported where it is used, so a PNG measurement runs without pymupdf installed.
+# pylint: disable=import-outside-toplevel
+
 
 def ink_stats(gray, width_pt):
-    """(ink fraction, left gutter, right gutter, top, bottom) in points, from a 2-D luminance array."""
-    import numpy as np
+    """(ink fraction, left gutter, right gutter, top, bottom) in points, from a luminance array."""
     mask = gray < 245
     cols, rows = mask.any(0), mask.any(1)
     if not cols.any():
@@ -39,17 +41,20 @@ def ink_stats(gray, width_pt):
 
 
 def from_pdf(path, scale=8):
-    import fitz, numpy as np
+    """Page 1 of a figure PDF as a luminance array, with its size and its embedded font types."""
+    import fitz
+    import numpy as np
     d = fitz.open(path)
     p = d[0]
     pix = p.get_pixmap(matrix=fitz.Matrix(scale, scale))
-    a = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)[..., :3].mean(2)
-    return a, p.rect.width, p.rect.height, [f[2] for f in p.get_fonts()]
+    a = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
+    return a[..., :3].mean(2), p.rect.width, p.rect.height, [f[2] for f in p.get_fonts()]
 
 
 def from_paper_figure(path, fignum, scale=6):
     """The region of a reference paper between a `Figure N.` caption and the block above it."""
-    import fitz, numpy as np
+    import fitz
+    import numpy as np
     d = fitz.open(path)
     for p in d:
         blocks = p.get_text("dict")["blocks"]
@@ -58,21 +63,26 @@ def from_paper_figure(path, fignum, scale=6):
             if not re.match(rf"Figure {fignum}[.:]", txt):
                 continue
             cap = b["bbox"]
-            top = max([bb["bbox"][3] for bb in blocks if bb["bbox"][3] <= cap[1] + 1 and bb["bbox"][1] > 40], default=45)
+            top = max((bb["bbox"][3] for bb in blocks
+                       if bb["bbox"][3] <= cap[1] + 1 and bb["bbox"][1] > 40), default=45)
             clip = fitz.Rect(cap[0], top + 2, cap[2], cap[1] - 1)
-            if clip.height < 25:                                   # the block above is part of the figure
+            if clip.height < 25:                    # the block above is part of the figure
                 clip = fitz.Rect(cap[0], max(45, cap[1] - 220), cap[2], cap[1] - 1)
             pix = p.get_pixmap(matrix=fitz.Matrix(scale, scale), clip=clip)
-            a = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)[..., :3].mean(2)
-            return a, clip.width, clip.height, []
+            a = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)
+            return a[..., :3].mean(2), clip.width, clip.height, []
     raise SystemExit(f"no Figure {fignum} caption found in {path}")
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    """Print the measurements, and exit non-zero on any reading the contract does not allow."""
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("path", help="a figure PDF, a PNG render, or a paper PDF with --figure")
-    ap.add_argument("--figure", type=int, help="measure Figure N of a reference paper instead of page 1")
-    ap.add_argument("--width", type=float, default=236.0, help="column width in points, for a PNG (default 236)")
+    ap.add_argument("--figure", type=int,
+                    help="measure Figure N of a reference paper instead of page 1")
+    ap.add_argument("--width", type=float, default=236.0,
+                    help="column width in points, for a PNG (default 236)")
     a = ap.parse_args()
     if a.figure:
         gray, w, h, fonts = from_paper_figure(a.path, a.figure)
@@ -86,12 +96,15 @@ def main():
     frac, gl, gr, gt, gb = ink_stats(gray, w)
     print(f"{a.path}")
     print(f"  page      {w:.1f} x {h:.1f} pt   aspect {w / h:.2f}")
-    print(f"  ink       {frac * 100:.1f} %" + ("   LOW, reads as empty (flagships 8-37 %)" if frac < 0.15 else ""))
-    print(f"  gutters   L {gl:.1f}  R {gr:.1f} pt" + ("   WIDE, flagships run 0-9 pt" if max(gl, gr) > 10 else ""))
+    print(f"  ink       {frac * 100:.1f} %"
+          + ("   LOW, reads as empty (flagships 8-37 %)" if frac < 0.15 else ""))
+    print(f"  gutters   L {gl:.1f}  R {gr:.1f} pt"
+          + ("   WIDE, flagships run 0-9 pt" if max(gl, gr) > 10 else ""))
     print(f"  margins   T {gt:.1f}  B {gb:.1f} pt")
     if fonts:
         bad = [f for f in fonts if f == "Type3"]
-        print(f"  fonts     {sorted(set(fonts))}" + ("   FAIL: Type 3, outline the text before export" if bad else ""))
+        print(f"  fonts     {sorted(set(fonts))}"
+              + ("   FAIL: Type 3, outline the text before export" if bad else ""))
     else:
         print("  fonts     none (text outlined)")
     return 1 if (frac < 0.15 or max(gl, gr) > 10 or any(f == "Type3" for f in fonts)) else 0
